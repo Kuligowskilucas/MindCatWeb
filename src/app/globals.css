@@ -1,26 +1,55 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Marca */
+  --color-purple-50:  #f6f1fb;
+  --color-purple-100: #ebe0f5;
+  --color-purple-200: #d9c5ec;
+  --color-purple-300: #c0a1de;
+  --color-purple-400: #a178c2;  /* primário da marca */
+  --color-purple-500: #8b60af;  /* pressionado */
+  --color-purple-600: #744f94;
+  --color-purple-700: #5c3e75;
+
+  --color-sky-100: #e4f2f9;
+  --color-sky-200: #c2e2f1;
+  --color-sky-300: #84bfe0;     /* azul da marca */
+  --color-sky-400: #5aa6cf;
+
+  /* Superfícies */
+  --color-canvas: #faf8fc;      /* fundo da página */
+  --color-surface: #ffffff;     /* cards */
+  --color-line: #ebe7ef;        /* bordas */
+
+  /* Texto */
+  --color-ink: #2a2333;
+  --color-ink-soft: #6b6478;
+  --color-ink-faint: #9d97a8;
+
+  /* Semânticas */
+  --color-success: #3f9d6d;
+  --color-danger: #c8465a;
+  --color-warning: #c98a2e;
+
+  /* Escala de humor — 1 (pior) a 5 (melhor) */
+  --color-mood-1: #b2607f;
+  --color-mood-2: #c98a86;
+  --color-mood-3: #d4b483;
+  --color-mood-4: #96b98c;
+  --color-mood-5: #6ba57f;
+
+  --radius-card: 0.875rem;
+  --shadow-card: 0 1px 2px rgb(42 35 51 / 0.04), 0 4px 16px rgb(42 35 51 / 0.05);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html, body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Foco visível e consistente — acessibilidade não é opcional num app de saúde */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-purple-400);
+  outline-offset: 2px;
 }
