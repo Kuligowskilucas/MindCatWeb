@@ -11,7 +11,10 @@ export interface UserProfile {
   push_notifications: boolean;
   progress_bar: boolean;
   consent_share_with_professional: boolean;
-  // diary_password_hash NUNCA vem na API (getProfile faz makeHidden)
+  // diary_password_hash NUNCA vem na API (está em $hidden).
+  // has_diary_password é o booleano derivado ($appends no UserProfile) —
+  // é como o front sabe se deve mostrar "criar senha" ou "destravar".
+  has_diary_password: boolean;
   created_at: string;
   updated_at: string;
 }

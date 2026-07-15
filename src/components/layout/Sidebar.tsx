@@ -46,7 +46,18 @@ const NAV: Record<NavKind, NavItem[]> = {
   ],
 };
 
-export function Sidebar({ kind }: { kind: NavKind }) {
+/**
+ * Conteúdo interno da navegação, reaproveitado em dois lugares: a sidebar fixa
+ * (desktop) e o drawer deslizante (mobile). onNavigate fecha o drawer ao clicar
+ * num link — no desktop fica undefined e não faz nada.
+ */
+export function SidebarNav({
+  kind,
+  onNavigate,
+}: {
+  kind: NavKind;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -54,48 +65,47 @@ export function Sidebar({ kind }: { kind: NavKind }) {
   const items = NAV[kind];
 
   return (
-    <>
-      <aside className="flex h-dvh w-60 shrink-0 flex-col border-r border-line bg-surface">
-        <div className="flex items-center gap-2 px-5 py-5">
-          <Image src="/icone.png" alt="" width={32} height={32} />
-          <span className="text-lg font-semibold text-ink">MindCat</span>
-        </div>
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 px-5 py-5">
+        <Image src="/icone.png" alt="" width={32} height={32} />
+        <span className="text-lg font-semibold text-ink">MindCat</span>
+      </div>
 
-        <nav className="flex-1 space-y-1 px-3">
-          {items.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                  active
-                    ? 'bg-purple-50 text-purple-700'
-                    : 'text-ink-soft hover:bg-purple-50/60 hover:text-ink',
-                )}
-              >
-                <item.icon aria-hidden className="h-5 w-5 shrink-0" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+      <nav className="flex-1 space-y-1 px-3">
+        {items.map((item) => {
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                active
+                  ? 'bg-purple-50 text-purple-700'
+                  : 'text-ink-soft hover:bg-purple-50/60 hover:text-ink',
+              )}
+            >
+              <item.icon aria-hidden className="h-5 w-5 shrink-0" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
 
-        <div className="border-t border-line p-3">
-          <div className="mb-2 px-3 py-1">
-            <p className="truncate text-sm font-medium text-ink">{user?.name}</p>
-            <p className="truncate text-xs text-ink-faint">{user?.email}</p>
-          </div>
-          <button
-            onClick={() => setConfirmLogout(true)}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-ink-soft hover:bg-purple-50 hover:text-ink"
-          >
-            Sair
-          </button>
+      <div className="border-t border-line p-3">
+        <div className="mb-2 px-3 py-1">
+          <p className="truncate text-sm font-medium text-ink">{user?.name}</p>
+          <p className="truncate text-xs text-ink-faint">{user?.email}</p>
         </div>
-      </aside>
+        <button
+          onClick={() => setConfirmLogout(true)}
+          className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-ink-soft hover:bg-purple-50 hover:text-ink"
+        >
+          Sair
+        </button>
+      </div>
 
       <Dialog
         open={confirmLogout}
@@ -108,6 +118,15 @@ export function Sidebar({ kind }: { kind: NavKind }) {
           logout();
         }}
       />
-    </>
+    </div>
+  );
+}
+
+/** Sidebar fixa — visível só a partir de lg (no mobile usamos o drawer). */
+export function Sidebar({ kind }: { kind: NavKind }) {
+  return (
+    <aside className="hidden h-dvh w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
+      <SidebarNav kind={kind} />
+    </aside>
   );
 }

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { MoodScale } from './MoodScale';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
@@ -10,15 +11,16 @@ import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
 import { useCreateMood, useTodayMood, moodErrorMessage } from '@/hooks/useMoods';
 import { MOOD_META } from '@/lib/moodMeta';
-import type { MoodLevel } from '@/lib/types';
-import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/lib/http';
-
+import type { MoodLevel } from '@/lib/types';
 
 export function MoodCheckIn() {
+  // TODOS os hooks no topo, antes de qualquer return condicional — senão a
+  // ordem dos hooks muda entre renders e o React quebra (Rules of Hooks).
   const { todayMood, isLoading } = useTodayMood();
   const createMood = useCreateMood();
   const toast = useToast();
+  const queryClient = useQueryClient();
 
   const [selected, setSelected] = useState<MoodLevel | null>(null);
   const [note, setNote] = useState('');
@@ -55,8 +57,6 @@ export function MoodCheckIn() {
       </Card>
     );
   }
-
-  const queryClient = useQueryClient();
 
   async function submit() {
     if (!selected) return;

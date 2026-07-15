@@ -40,13 +40,16 @@ export function Dialog({
     document.addEventListener('keydown', onKey);
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    panelRef.current?.focus();
 
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previous;
     };
   }, [open, onClose, loading]);
+
+  useEffect(() => {
+    if (open) panelRef.current?.focus();
+  }, [open]);
 
   if (!open) return null;
 

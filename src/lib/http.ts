@@ -150,6 +150,6 @@ export const http = {
     send<T>(path, { ...o, method: 'PUT', body }, false),
   patch:  <T>(path: string, body?: unknown, o: Omit<RequestOptions, 'method' | 'body'> = {}) =>
     send<T>(path, { ...o, method: 'PATCH', body }, false),
-  delete: <T>(path: string, o: Omit<RequestOptions, 'method' | 'body'> = {}) =>
-    send<T>(path, { ...o, method: 'DELETE' }, false),
+  delete: <T>(path: string, body?: unknown, o: Omit<RequestOptions, 'method' | 'body'> = {}) =>
+    send<T>(path, { ...o, method: 'DELETE', body }, false),
 };
