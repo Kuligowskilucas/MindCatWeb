@@ -1,51 +1,126 @@
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Suspense, useState, type FormEvent } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth, homeFor } from '@/contexts/AuthContext';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
+import { useToast } from '@/components/ui/Toast';
+import { ApiError } from '@/lib/http';
+import { validateEmail } from '@/lib/validation';
 
-export default function LoginPage() {
-  const { user, initializing, login, logout } = useAuth();
-  const [erro, setErro] = useState<string | null>(null);
-  const [ocupado, setOcupado] = useState(false);
+function LoginForm() {
+  const { login } = useAuth();
+  const router = useRouter();
+  const params = useSearchParams();
+  const toast = useToast();
 
-  if (initializing) return <p className="p-8">Verificando sessão…</p>;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [loading, setLoading] = useState(false);
 
-  async function entrar() {
-    setErro(null);
-    setOcupado(true);
+  const expirou = params.get('expirou') === '1';
+  const proximo = params.get('proximo');
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    const emailErr = validateEmail(email);
+    if (emailErr) {
+      setErrors({ email: emailErr });
+      return;
+    }
+    setErrors({});
+    setLoading(true);
+
     try {
-      await login('paciente@mindcat.app', 'Paciente123');
-    } catch (e: any) {
-      setErro(`${e.name}: ${e.message}`);
+      const user = await login(email.trim(), password);
+      router.replace(proximo ?? homeFor(user.role));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 422) {
+          setErrors({
+            email: err.fieldError('email'),
+            password: err.fieldError('password'),
+          });
+        } else if (err.status === 401) {
+          toast.error('Email ou senha incorretos.');
+        } else {
+          toast.error(err.message);
+        }
+      } else {
+        toast.error('Não conseguimos falar com o servidor.');
+      }
     } finally {
-      setOcupado(false);
+      setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-4 p-8">
-      <p className="text-sm text-ink-soft">
-        Estado: <strong>{user ? 'AUTENTICADO' : 'sem sessão'}</strong>
-      </p>
+    <AuthShell
+      title="Entrar"
+      subtitle="Que bom te ver de novo."
+      footer={
+        <>
+          Ainda não tem conta?{' '}
+          <Link href="/registro" className="font-medium text-purple-600 hover:underline">
+            Criar conta
+          </Link>
+        </>
+      }
+    >
+      {expirou && (
+        <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-ink-soft">
+          Sua sessão expirou. Entre novamente para continuar.
+        </div>
+      )}
 
-      <pre className="overflow-auto rounded bg-purple-50 p-4 text-xs">
-        {user ? JSON.stringify(user, null, 2) : '— nenhum usuário —'}
-      </pre>
+      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+        <Input
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          error={errors.email}
+          disabled={loading}
+        />
 
-      <div className="flex gap-2">
-        <button
-          onClick={entrar}
-          disabled={ocupado}
-          className="rounded bg-purple-400 px-4 py-2 text-white disabled:opacity-50"
-        >
-          {ocupado ? 'Entrando…' : 'Entrar como paciente'}
-        </button>
-        <button onClick={() => logout()} className="rounded border px-4 py-2">
-          Sair
-        </button>
-      </div>
+        <div>
+          <PasswordInput
+            label="Senha"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
+            disabled={loading}
+          />
+          <div className="mt-1.5 text-right">
+            <Link
+              href="/esqueci-a-senha"
+              className="text-sm text-purple-600 hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
+        </div>
 
-      {erro && <p className="text-sm text-danger">{erro}</p>}
-    </div>
+        <Button type="submit" fullWidth loading={loading}>
+          Entrar
+        </Button>
+      </form>
+    </AuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-ink-soft">Carregando…</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -7,7 +7,7 @@ interface EmptyStateProps {
   action?: ReactNode;
 }
 
-export function EmptyState({ emoji = '🐱', title, description, action }: EmptyStateProps) {
+export function EmptyState({ emoji = '', title, description, action }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
       <span aria-hidden className="text-4xl">{emoji}</span>

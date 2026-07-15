@@ -1,11 +1,17 @@
 export type Role = 'patient' | 'pro' | 'admin';
 
+export type TreatmentType = 'pre_defined' | 'ai_based';
+
 export interface UserProfile {
   id: number;
   user_id: number;
-  crp?: string | null;
-  bio?: string | null;
+  use_ai: boolean;
+  treatment_type: TreatmentType | null;
+  tdah_reminder: boolean;
+  push_notifications: boolean;
+  progress_bar: boolean;
   consent_share_with_professional: boolean;
+  // diary_password_hash NUNCA vem na API (getProfile faz makeHidden)
   created_at: string;
   updated_at: string;
 }
@@ -20,27 +26,35 @@ export interface User {
   updated_at: string;
 }
 
+export type MoodLevel = 1 | 2 | 3 | 4 | 5;
+
 export interface Mood {
   id: number;
   user_id: number;
-  mood: 1 | 2 | 3 | 4 | 5;
-  note?: string | null;
+  mood_level: MoodLevel;
+  mood_description: string | null;
+  recorded_at: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface DiaryEntry {
   id: number;
-  title?: string | null;
-  content: string;
+  user_id: number;
+  content: string; // criptografado no banco, decriptado pela API
   created_at: string;
+  updated_at: string;
 }
+
+export type TaskStatus = 'active' | 'done';
 
 export interface Task {
   id: number;
-  title: string;
-  description?: string | null;
-  done: boolean;
-  patient_id: number;
   pro_id: number;
+  patient_id: number;
+  title: string;
+  status: TaskStatus;
+  completed_at: string | null;
   created_at: string;
+  updated_at: string;
 }
