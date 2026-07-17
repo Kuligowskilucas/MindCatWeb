@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const AUTH_COOKIE = process.env.NEXT_PUBLIC_AUTH_COOKIE ?? 'mindcat_auth';
 
-const PROTECTED_PREFIXES = ['/hoje', '/diario', '/humor', '/tarefas', '/perfil', '/pro', '/admin'];
+const PROTECTED_PREFIXES = ['/hoje', '/diario', '/tarefas', '/perfil', '/pro', '/admin'];
 const GUEST_ONLY = ['/login', '/registro', '/esqueci-a-senha', '/redefinir-senha'];
 
 export function middleware(request: NextRequest) {

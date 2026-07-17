@@ -73,7 +73,10 @@ async function send<T>(
     'X-Requested-With': 'XMLHttpRequest',
   };
 
-  if (options.body !== undefined) {
+  const isFormData =
+    typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+  if (options.body !== undefined && !isFormData) {
     headers['Content-Type'] = 'application/json';
   }
 
@@ -92,7 +95,12 @@ async function send<T>(
       headers,
       credentials: 'include',
       signal: options.signal,
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body:
+        options.body !== undefined
+          ? isFormData
+            ? (options.body as FormData)
+            : JSON.stringify(options.body)
+          : undefined,
     });
   } catch {
     throw new NetworkError();

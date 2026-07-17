@@ -23,3 +23,22 @@ export const tasksApi = {
    */
   markDone: (id: number) => http.patch<Task>(`/tasks/${id}/done`),
 };
+
+/** Lado profissional das tarefas (rotas guardadas por role:pro no backend). */
+export const proTasksApi = {
+  /**
+   * GET /tasks?scope=assigned — tarefas criadas pelo pro, já filtradas pelo
+   * backend por consentimento do paciente. Paginado (paginate(30)).
+   */
+  listAssigned: () => http.get<Paginated<Task>>('/tasks?scope=assigned'),
+
+  /**
+   * POST /tasks — cria (title máx 120). Passa pelo Gate view-patient, então
+   * exige vínculo E consentimento: 403 se qualquer um faltar.
+   */
+  create: (patientId: number, title: string) =>
+    http.post<Task>('/tasks', { patient_id: patientId, title }),
+
+  /** DELETE /tasks/{id} — só o pro dono da tarefa. */
+  remove: (id: number) => http.delete<{ message: string }>(`/tasks/${id}`),
+};
