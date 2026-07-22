@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
 import { cn } from '@/lib/cn';
 import { MOOD_LEVELS, MOOD_META } from '@/lib/moodMeta';
 import type { MoodLevel } from '@/lib/types';

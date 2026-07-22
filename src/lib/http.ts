@@ -115,7 +115,7 @@ async function send<T>(
     return undefined as T;
   }
 
-  let payload: any = null;
+  let payload: unknown = null;
   try {
     payload = await res.json();
   } catch {
@@ -130,10 +130,12 @@ async function send<T>(
     window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
   }
 
+  const body = (payload ?? {}) as { message?: string; errors?: Record<string, string[]> };
+  
   throw new ApiError(
     res.status,
-    payload?.message ?? messageForStatus(res.status),
-    payload?.errors,
+    body.message ?? messageForStatus(res.status),
+    body.errors,
   );
 }
 

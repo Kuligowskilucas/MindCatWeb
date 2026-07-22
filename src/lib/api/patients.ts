@@ -15,17 +15,6 @@ export interface PatientListItem {
 }
 
 /**
- * Resultado de GET /patients/search. O `consent` é o que decide se dá pra
- * vincular: POST /links dá 403 se o paciente ainda não consentiu.
- */
-export interface PatientSearchResult {
-  id: number;
-  name: string;
-  email: string;
-  consent: boolean;
-}
-
-/**
  * Humor no resumo. O backend devolve o model UserMoodTracking cru (limit 14,
  * mais recentes primeiro), então tipo só os campos que a tela usa.
  */
@@ -59,19 +48,6 @@ export interface PatientSummary {
 export const patientsApi = {
   /** GET /patients — paginado, já filtrado por consentimento no backend. */
   list: () => http.get<Paginated<PatientListItem>>('/patients'),
-
-  /**
-   * GET /patients/search?email= — 404 se não existir paciente com o email.
-   * Throttle 10/min no backend. Encode do email pra não quebrar a query.
-   */
-  search: (email: string) =>
-    http.get<PatientSearchResult>(
-      `/patients/search?email=${encodeURIComponent(email)}`,
-    ),
-
-  /** POST /links — cria o vínculo. 403 se o paciente não tiver consentido. */
-  link: (patientId: number) =>
-    http.post<unknown>('/links', { patient_id: patientId }),
 
   /** DELETE /links/{patientId} — desativa (active=false); paciente some da lista. */
   unlink: (patientId: number) =>

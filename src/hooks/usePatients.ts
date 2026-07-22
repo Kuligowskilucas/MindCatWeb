@@ -31,15 +31,6 @@ export function usePatientSummary(patientId: number) {
   });
 }
 
-export function useLinkPatient() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (patientId: number) => patientsApi.link(patientId),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: PATIENTS_KEY }),
-  });
-}
-
 export function useUnlinkPatient() {
   const queryClient = useQueryClient();
   return useMutation({

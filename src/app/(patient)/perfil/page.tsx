@@ -3,6 +3,7 @@
 import { AccountInfoForm } from '@/components/account/AccountInfoForm';
 import { PasswordChangeForm } from '@/components/account/PasswordChangeForm';
 import { ConsentCard } from '@/components/account/ConsentCard';
+import { InviteCard } from '@/components/account/InviteCard';
 import { DangerZone } from '@/components/account/DangerZone';
 
 export default function PerfilPage() {
@@ -18,6 +19,7 @@ export default function PerfilPage() {
       <AccountInfoForm />
       <PasswordChangeForm />
       <ConsentCard />
+      <InviteCard />
       <DangerZone />
     </div>
   );

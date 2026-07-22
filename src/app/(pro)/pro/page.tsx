@@ -66,7 +66,7 @@ export default function ProPacientesPage() {
         <Card>
           <EmptyState
             title="Nenhum paciente ainda"
-            description="Adicione um paciente pelo email. Ele precisa ter autorizado o compartilhamento de dados no app."
+            description="Peça ao paciente o código de convite gerado no app dele e adicione aqui. Ele precisa ter autorizado o compartilhamento de dados."
             action={<Button onClick={() => setAddOpen(true)}>Adicionar paciente</Button>}
           />
         </Card>
