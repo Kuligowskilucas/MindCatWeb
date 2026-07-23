@@ -1,18 +1,11 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/lib/api/auth';
 import { accountApi } from '@/lib/api/account';
+import { setAccessToken } from '@/lib/authToken';
 import { AUTH_EXPIRED_EVENT } from '@/lib/http';
 import type { Role, User } from '@/lib/types';
 
@@ -103,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sessão morreu no meio do uso (401 vindo de qualquer request).
   useEffect(() => {
     function handleExpired() {
+      setAccessToken(null);
       setUser(null);
       setAuthHint(false);
       queryClient.clear();

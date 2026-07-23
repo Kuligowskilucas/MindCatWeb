@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
+import { isReviewOverdue } from '@/lib/credential';
 import {
   useCredential,
   useSubmitCredential,
@@ -36,12 +37,13 @@ export default function VerificacaoPage() {
       </header>
 
       {status === 'approved' ? (
-        <ApprovedCard />
+        isReviewOverdue(credential) ? <ReviewDueCard /> : <ApprovedCard />
       ) : status === 'submitted' || status === 'under_review' ? (
         <UnderReviewCard />
       ) : (
         <SubmissionForm
           rejected={status === 'rejected'}
+          expired={status === 'expired'}
           rejectionReason={credential?.rejection_reason ?? null}
         />
       )}
@@ -81,11 +83,27 @@ function UnderReviewCard() {
   );
 }
 
+function ReviewDueCard() {
+  return (
+    <Card>
+      <CardBody className="space-y-2 text-center">
+        <p className="text-lg font-semibold text-warning">Revisão vencida</p>
+        <p className="text-sm text-ink-soft">
+          Sua credencial precisa ser revalidada. O reenvio dos documentos será
+          liberado assim que o prazo de carência terminar.
+        </p>
+      </CardBody>
+    </Card>
+  );
+}
+
 function SubmissionForm({
   rejected,
+  expired,
   rejectionReason,
 }: {
   rejected: boolean;
+  expired: boolean;
   rejectionReason: string | null;
 }) {
   const submit = useSubmitCredential();
@@ -97,6 +115,8 @@ function SubmissionForm({
   const [crpDoc, setCrpDoc] = useState<File | null>(null);
   const [epsiDoc, setEpsiDoc] = useState<File | null>(null);
   const [error, setError] = useState<string>();
+
+  const resending = rejected || expired;
 
   async function handleSubmit() {
     if (!crpNumber.trim()) return setError('Informe o número do CRP.');
@@ -123,10 +143,19 @@ function SubmissionForm({
   return (
     <Card>
       <CardHeader
-        title={rejected ? 'Reenviar documentos' : 'Enviar para análise'}
+        title={resending ? 'Reenviar documentos' : 'Enviar para análise'}
         description="Informe seu CRP e anexe os comprovantes de CRP e e-Psi (PDF ou imagem, até 5 MB)."
       />
       <CardBody className="space-y-4">
+        {expired && (
+          <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
+            <p className="text-sm font-medium text-warning">Sua credencial venceu.</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Reenvie os comprovantes para voltar a atender seus pacientes.
+            </p>
+          </div>
+        )}
+
         {rejected && (
           <div className="rounded-lg border border-danger/30 bg-danger/5 p-3">
             <p className="text-sm font-medium text-danger">Sua submissão anterior foi recusada.</p>
@@ -189,7 +218,7 @@ function SubmissionForm({
 
         <div className="flex justify-end">
           <Button onClick={handleSubmit} loading={submit.isPending}>
-            {rejected ? 'Reenviar' : 'Enviar para análise'}
+            {resending ? 'Reenviar' : 'Enviar para análise'}
           </Button>
         </div>
       </CardBody>

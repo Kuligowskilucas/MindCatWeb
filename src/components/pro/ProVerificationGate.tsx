@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCredential } from '@/hooks/useCredential';
 import { Spinner } from '@/components/ui/Spinner';
+import { CredentialGraceBanner } from '@/components/pro/CredentialGraceBanner';
+import { isCredentialActive, isReviewOverdue } from '@/lib/credential';
 
 // Rotas que o pro AINDA NÃO aprovado pode acessar (submeter credencial e
 // mexer no próprio perfil). As demais rotas de /pro exigem aprovação.
@@ -14,15 +16,15 @@ export function ProVerificationGate({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
 
-  const approved = credential?.status === 'approved';
+  const active = isCredentialActive(credential);
   const allowed = ALLOWED_WHILE_UNVERIFIED.includes(pathname);
 
   useEffect(() => {
     if (isLoading || isError) return;
-    if (!approved && !allowed) {
+    if (!active && !allowed) {
       router.replace('/pro/verificacao');
     }
-  }, [isLoading, isError, approved, allowed, router]);
+  }, [isLoading, isError, active, allowed, router]);
 
   if (isLoading) {
     return (
@@ -34,7 +36,7 @@ export function ProVerificationGate({ children }: { children: React.ReactNode })
 
   if (isError) return <>{children}</>;
 
-  if (!approved && !allowed) {
+  if (!active && !allowed) {
     return (
       <div className="flex justify-center py-20">
         <Spinner size="lg" label="Redirecionando" />
@@ -42,5 +44,12 @@ export function ProVerificationGate({ children }: { children: React.ReactNode })
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {credential && isReviewOverdue(credential) && (
+        <CredentialGraceBanner credential={credential} />
+      )}
+      {children}
+    </>
+  );
 }

@@ -1,4 +1,8 @@
+import { getAccessToken, setAccessToken } from '@/lib/authToken';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+
+const REFRESH_PATH = '/refresh';
 
 export class ApiError extends Error {
   constructor(
@@ -25,27 +29,48 @@ export class NetworkError extends Error {
 
 export const AUTH_EXPIRED_EVENT = 'mindcat:auth-expired';
 
-function readCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${name}=`));
-  return match ? match.slice(name.length + 1) : null;
-}
+let refreshInFlight: Promise<boolean> | null = null;
 
-/** Garante que o cookie XSRF-TOKEN existe antes de um request que muda estado. */
-async function ensureCsrfCookie(force = false): Promise<void> {
-  if (!force && readCookie('XSRF-TOKEN')) return;
+/**
+ * Troca o refresh cookie por um access novo.
+ *
+ * O backend ROTACIONA o par a cada renovação: o refresh usado morre na hora.
+ * Se duas requisições tomarem 401 juntas e cada uma chamar /refresh, a segunda
+ * chega com um token já revogado e derruba a sessão. Por isso a chamada é
+ * compartilhada — quem chegar durante o voo espera o mesmo resultado.
+ */
+function refreshAccessToken(): Promise<boolean> {
+  refreshInFlight ??= (async () => {
+    try {
+      const res = await fetch(`${API_URL}/api${REFRESH_PATH}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      });
 
-  const res = await fetch(`${API_URL}/sanctum/csrf-cookie`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: { Accept: 'application/json' },
-  });
+      if (!res.ok) {
+        setAccessToken(null);
+        return false;
+      }
 
-  if (!res.ok) {
-    throw new ApiError(res.status, 'Falha ao inicializar a sessão.');
-  }
+      const data = (await res.json()) as { token?: string };
+
+      if (!data.token) {
+        setAccessToken(null);
+        return false;
+      }
+
+      setAccessToken(data.token);
+      return true;
+    } catch {
+      setAccessToken(null);
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
 }
 
 type RequestOptions = {
@@ -62,16 +87,16 @@ async function send<T>(
   isRetry: boolean,
 ): Promise<T> {
   const method = options.method ?? 'GET';
-  const mutating = method !== 'GET';
-
-  if (mutating) {
-    await ensureCsrfCookie(isRetry);
-  }
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   };
+
+  const token = getAccessToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
 
   const isFormData =
     typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -80,20 +105,11 @@ async function send<T>(
     headers['Content-Type'] = 'application/json';
   }
 
-  if (mutating) {
-    const token = readCookie('XSRF-TOKEN');
-    if (token) {
-      // Laravel envia o cookie URL-encoded. Sem o decode, o header não bate.
-      headers['X-XSRF-TOKEN'] = decodeURIComponent(token);
-    }
-  }
-
   let res: Response;
   try {
     res = await fetch(`${API_URL}/api${path}`, {
       method,
       headers,
-      credentials: 'include',
       signal: options.signal,
       body:
         options.body !== undefined
@@ -106,9 +122,14 @@ async function send<T>(
     throw new NetworkError();
   }
 
-  // 419 = CSRF token expirado/inválido. Renova o cookie e tenta uma vez.
-  if (res.status === 419 && !isRetry) {
-    return send<T>(path, options, true);
+  // Access vencido (ou ausente após um F5): tenta reconstruir pelo refresh
+  // cookie uma única vez e repete a requisição original.
+  if (res.status === 401 && !isRetry && path !== REFRESH_PATH) {
+    const renewed = await refreshAccessToken();
+
+    if (renewed) {
+      return send<T>(path, options, true);
+    }
   }
 
   if (res.status === 204) {
@@ -127,11 +148,12 @@ async function send<T>(
   }
 
   if (res.status === 401 && !options.silent401 && typeof window !== 'undefined') {
+    setAccessToken(null);
     window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
   }
 
   const body = (payload ?? {}) as { message?: string; errors?: Record<string, string[]> };
-  
+
   throw new ApiError(
     res.status,
     body.message ?? messageForStatus(res.status),
