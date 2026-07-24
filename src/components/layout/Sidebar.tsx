@@ -94,6 +94,13 @@ export function SidebarNav({
       </nav>
 
       <div className="border-t border-line p-3">
+        <Link
+          href="/ajuda"
+          onClick={onNavigate}
+          className="mb-2 block rounded-lg px-3 py-2 text-sm text-ink-soft transition-colors hover:bg-purple-50 hover:text-ink"
+        >
+          Ajuda e emergência
+        </Link>
         <div className="mb-2 px-3 py-1">
           <p className="truncate text-sm font-medium text-ink">{user?.name}</p>
           <p className="truncate text-xs text-ink-faint">{user?.email}</p>

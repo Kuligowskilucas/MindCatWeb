@@ -192,10 +192,7 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-6 py-20">
         <div className="grid gap-5 md:grid-cols-3">
           {PATIENT_FEATURES.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-card border border-line bg-surface p-6 shadow-card"
-            >
+            <div key={f.title} className="rounded-card border border-line bg-surface p-6 shadow-card">
               <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-500">
                 {f.icon}
               </div>
@@ -281,6 +278,9 @@ export default function Home() {
           <nav className="flex items-center gap-4 text-sm">
             <Link href="/login" className="text-ink-soft transition-colors hover:text-purple-600">
               Entrar
+            </Link>
+            <Link href="/ajuda" className="text-ink-soft transition-colors hover:text-purple-600">
+              Ajuda
             </Link>
             <Link href="/registro" className="text-ink-soft transition-colors hover:text-purple-600">
               Criar conta

@@ -9,6 +9,7 @@ import { DiaryReader } from '@/components/diary/DiaryReader';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card, CardBody } from '@/components/ui/Card';
+import { CrisisNote } from '@/components/support/CrisisNote';
 
 export default function DiarioPage() {
   const { data: profile, isLoading, isError } = useProfile();
@@ -69,6 +70,8 @@ export default function DiarioPage() {
           <DiaryReader password={password} />
         </>
       )}
+
+      <CrisisNote />
     </div>
   );
 }
