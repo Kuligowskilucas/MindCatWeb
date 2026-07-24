@@ -160,7 +160,7 @@ export default function Home() {
         </h1>
         <p className="rise d2 mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
           O MindCat acompanha seu humor, guarda seu diário e organiza as tarefas
-          combinadas com seu psicólogo — todos os dias, não só na consulta.
+          combinadas com seu psicólogo todos os dias, não só na consulta.
         </p>
         <div className="rise d3 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/registro" className={ctaPrimary}>
@@ -182,7 +182,7 @@ export default function Home() {
             ))}
           </div>
           <p className="mx-auto mt-4 max-w-md text-sm text-ink-faint">
-            Registre como você está com um toque. Sem notas de 0 a 10 — um dia
+            Registre como você está com um toque, sem notas de 0 a 10. Um dia
             difícil não é um alarme vermelho.
           </p>
         </div>
