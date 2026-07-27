@@ -109,6 +109,7 @@ async function send<T>(
   try {
     res = await fetch(`${API_URL}/api${path}`, {
       method,
+      credentials: 'include',
       headers,
       signal: options.signal,
       body:
