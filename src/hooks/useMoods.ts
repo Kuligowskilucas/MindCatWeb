@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { moodsApi } from '@/lib/api/moods';
+import { moodsApi, type Paginated } from '@/lib/api/moods';
 import { ApiError } from '@/lib/http';
 import { isToday } from '@/lib/date';
 import type { Mood, MoodLevel } from '@/lib/types';
@@ -30,8 +30,10 @@ export function useCreateMood() {
     mutationFn: (data: { mood_level: MoodLevel; mood_description?: string }) =>
       moodsApi.create(data),
     onSuccess: (created) => {
-      queryClient.setQueryData<Mood[]>(MOODS_KEY, (old) =>
-        old ? [created, ...old] : [created],
+      queryClient.setQueryData<Paginated<Mood>>(MOODS_KEY, (old) =>
+        old
+          ? { ...old, data: [created, ...old.data], total: old.total + 1 }
+          : old,
       );
       queryClient.invalidateQueries({ queryKey: MOODS_KEY });
     },

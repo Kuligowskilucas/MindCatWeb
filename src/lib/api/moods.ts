@@ -2,7 +2,7 @@ import { http } from '@/lib/http';
 import type { Mood, MoodLevel } from '@/lib/types';
 
 /** GET /moods é paginado no Laravel. */
-interface Paginated<T> {
+export interface Paginated<T> {
   data: T[];
   current_page: number;
   last_page: number;
