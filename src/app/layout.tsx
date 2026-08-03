@@ -3,6 +3,7 @@ import { Providers } from './providers';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://mindcat.com.br'),
   title: 'MindCat',
   description: 'Cuidado contínuo entre uma sessão e outra.',
 };
