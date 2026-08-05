@@ -2,6 +2,7 @@
 
 import { AccountInfoForm } from '@/components/account/AccountInfoForm';
 import { PasswordChangeForm } from '@/components/account/PasswordChangeForm';
+import { TwoFactorCard } from '@/components/account/TwoFactorCard';
 
 
 export default function ProPerfilPage() {
@@ -14,6 +15,7 @@ export default function ProPerfilPage() {
 
       <AccountInfoForm />
       <PasswordChangeForm />
+      <TwoFactorCard />
     </div>
   );
 }

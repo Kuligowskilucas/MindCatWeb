@@ -13,13 +13,10 @@ interface AuthContextValue {
   user: User | null;
   /** true enquanto a checagem inicial de sessão não terminou. */
   initializing: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (data: {
-    name: string;
-    email: string;
-    password: string;
-    role: Role;
-  }) => Promise<User>;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  register: (data: { name: string; email: string; password: string; role: Role; }) => Promise<User>;
+  verifyTwoFactor: (challenge: string, code: string) => Promise<User>;
+  resendTwoFactor: (challenge: string) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -107,14 +104,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(AUTH_EXPIRED_EVENT, handleExpired);
   }, [queryClient, router]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    await authApi.login(email, password);
+  const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+    const res = await authApi.login(email, password);
+
+    if ('two_factor_required' in res) {
+      return { twoFactorRequired: true, challenge: res.challenge };
+    }
+
     const me = await authApi.me();
     setUser(me);
-    // Seta a dica ANTES de a página chamar router.replace, senão o middleware
-    // no destino ainda veria "não logado" e devolveria pro /login.
+    setAuthHint(true);
+    return { user: me };
+  }, []);
+
+  const verifyTwoFactor = useCallback(async (challenge: string, code: string): Promise<User> => {
+    await authApi.verifyOtp(challenge, code);
+    const me = await authApi.me();
+    setUser(me);
     setAuthHint(true);
     return me;
+  }, []);
+
+  const resendTwoFactor = useCallback(async (challenge: string): Promise<void> => {
+    await authApi.resendOtp(challenge);
   }, []);
 
   const register = useCallback(
@@ -161,12 +173,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, initializing, login, register, logout, deleteAccount, refresh }),
-    [user, initializing, login, register, logout, deleteAccount, refresh],
+    () => ({ user, initializing, login, verifyTwoFactor, resendTwoFactor, register, logout, deleteAccount, refresh }),
+    [user, initializing, login, verifyTwoFactor, resendTwoFactor, register, logout, deleteAccount, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+export type LoginResult = | { user: User } | { twoFactorRequired: true; challenge: string };
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);

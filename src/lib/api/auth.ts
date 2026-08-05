@@ -9,6 +9,14 @@ interface AuthResponse {
   expires_in: number;
 }
 
+interface TwoFactorRequiredResponse {
+  two_factor_required: true;
+  challenge: string;
+  message: string;
+}
+
+export type LoginApiResult = AuthResponse | TwoFactorRequiredResponse;
+
 interface RegisterResponse {
   message: string;
   user: User;
@@ -20,11 +28,21 @@ interface VerifyEmailResponse {
 }
 
 export const authApi = {
-  login: async (email: string, password: string) => {
-    const res = await http.post<AuthResponse>('/login', { email, password });
+  login: async (email: string, password: string): Promise<LoginApiResult> => {
+    const res = await http.post<LoginApiResult>('/login', { email, password });
+    if ('token' in res) {
+      setAccessToken(res.token);
+    }
+    return res;
+  },
+
+  verifyOtp: async (challenge: string, code: string) => {
+    const res = await http.post<AuthResponse>('/login/verify-otp', { challenge, code });
     setAccessToken(res.token);
     return res;
   },
+
+  resendOtp: (challenge: string) => http.post<{ message: string }>('/login/resend-otp', { challenge }),
 
   register: (data: { name: string; email: string; password: string; role: Role }) =>
     http.post<RegisterResponse>('/register', data),

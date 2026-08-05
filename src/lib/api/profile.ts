@@ -22,4 +22,9 @@ export const profileApi = {
    */
   setDiaryPassword: (data: { new_password: string; current_password?: string }) =>
     http.put<{ message: string }>('/profile/diary-password', data),
+
+
+  setTwoFactor: (data: { enabled: boolean; password: string }) =>
+    http.put<{ message: string; two_factor_enabled: boolean }>('/profile/two-factor', data),
 };
+

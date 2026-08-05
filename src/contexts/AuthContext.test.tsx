@@ -4,8 +4,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { User } from '@/lib/types';
 import { AUTH_EXPIRED_EVENT } from '@/lib/http';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
 
-const mocks = vi.hoisted(() => ({ me: vi.fn(), replace: vi.fn() }));
+
+const mocks = vi.hoisted(() => ({
+  me: vi.fn(),
+  replace: vi.fn(),
+  login: vi.fn(),
+  verifyOtp: vi.fn(),
+  resendOtp: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mocks.replace }),
@@ -14,7 +22,9 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/lib/api/auth', () => ({
   authApi: {
     me: mocks.me,
-    login: vi.fn(),
+    login: mocks.login,
+    verifyOtp: mocks.verifyOtp,
+    resendOtp: mocks.resendOtp,
     register: vi.fn(),
     logout: vi.fn(),
     forgotPassword: vi.fn(),
@@ -88,5 +98,95 @@ describe('AuthProvider', () => {
       expect(mocks.replace).toHaveBeenCalledWith('/login?expirou=1'),
     );
     expect(await screen.findByText('no-user')).toBeInTheDocument();
+  });
+});
+
+function ActionsProbe() {
+  const { login, verifyTwoFactor } = useAuth();
+  const [out, setOut] = useState('');
+  return (
+    <div>
+      <button
+        onClick={async () => {
+          const r = await login('a@b.com', 'x');
+          setOut('twoFactorRequired' in r ? `2fa:${r.challenge}` : `user:${r.user.email}`);
+        }}
+      >
+        go
+      </button>
+      <button
+        onClick={async () => {
+          const u = await verifyTwoFactor('chal', '123456');
+          setOut(`verified:${u.email}`);
+        }}
+      >
+        verify
+      </button>
+      <span data-testid="out">{out}</span>
+    </div>
+  );
+}
+
+function renderActions() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <AuthProvider>
+        <ActionsProbe />
+      </AuthProvider>
+    </QueryClientProvider>,
+  );
+}
+
+describe('AuthProvider — 2FA', () => {
+  beforeEach(() => {
+    mocks.me.mockReset();
+    mocks.login.mockReset();
+    mocks.verifyOtp.mockReset();
+    mocks.replace.mockReset();
+  });
+
+  it('login sem 2FA retorna o usuário', async () => {
+    mocks.me.mockRejectedValueOnce(new Error('no session')).mockResolvedValueOnce(user);
+    mocks.login.mockResolvedValueOnce({ message: 'ok', user, token: 't', expires_in: 60 });
+
+    renderActions();
+    await screen.findByText('go');
+    await act(async () => {
+      screen.getByText('go').click();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('out')).toHaveTextContent('user:lucas@mindcat.com.br'),
+    );
+  });
+
+  it('login com 2FA retorna o challenge e não busca o /me pós-login', async () => {
+    mocks.me.mockRejectedValueOnce(new Error('no session'));
+    mocks.login.mockResolvedValueOnce({ two_factor_required: true, challenge: 'abc', message: 'ok' });
+
+    renderActions();
+    await screen.findByText('go');
+    await act(async () => {
+      screen.getByText('go').click();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('out')).toHaveTextContent('2fa:abc'));
+    expect(mocks.me).toHaveBeenCalledTimes(1);
+  });
+
+  it('verifyTwoFactor completa o login', async () => {
+    mocks.me.mockRejectedValueOnce(new Error('no session')).mockResolvedValueOnce(user);
+    mocks.verifyOtp.mockResolvedValueOnce({ message: 'ok', user, token: 't', expires_in: 60 });
+
+    renderActions();
+    await screen.findByText('verify');
+    await act(async () => {
+      screen.getByText('verify').click();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('out')).toHaveTextContent('verified:lucas@mindcat.com.br'),
+    );
   });
 });

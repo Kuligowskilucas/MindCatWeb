@@ -24,6 +24,7 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  two_factor_enabled?: boolean;
   profile?: UserProfile | null;
   created_at: string;
   updated_at: string;
