@@ -9,6 +9,7 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public errors?: Record<string, string[]>,
+    public code?: string,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -153,12 +154,13 @@ async function send<T>(
     window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
   }
 
-  const body = (payload ?? {}) as { message?: string; errors?: Record<string, string[]> };
+  const body = (payload ?? {}) as { message?: string; errors?: Record<string, string[]>; code?: string };
 
   throw new ApiError(
     res.status,
     body.message ?? messageForStatus(res.status),
     body.errors,
+    body.code,
   );
 }
 

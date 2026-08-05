@@ -9,6 +9,16 @@ interface AuthResponse {
   expires_in: number;
 }
 
+interface RegisterResponse {
+  message: string;
+  user: User;
+}
+
+interface VerifyEmailResponse {
+  message: string;
+  already_verified?: boolean;
+}
+
 export const authApi = {
   login: async (email: string, password: string) => {
     const res = await http.post<AuthResponse>('/login', { email, password });
@@ -16,11 +26,16 @@ export const authApi = {
     return res;
   },
 
-  register: async (data: { name: string; email: string; password: string; role: Role }) => {
-    const res = await http.post<AuthResponse>('/register', data);
-    setAccessToken(res.token);
-    return res;
-  },
+  register: (data: { name: string; email: string; password: string; role: Role }) =>
+    http.post<RegisterResponse>('/register', data),
+
+  verifyEmail: (id: string, hash: string, query: string) =>
+    http.get<VerifyEmailResponse>(
+      `/email/verify/${id}/${hash}${query ? `?${query}` : ''}`,
+    ),
+
+  resendVerification: (email: string) =>
+    http.post<{ message: string }>('/email/verification-notification', { email }),
 
   logout: async () => {
     try {

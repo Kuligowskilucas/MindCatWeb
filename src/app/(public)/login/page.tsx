@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { useToast } from '@/components/ui/Toast';
+import { authApi } from '@/lib/api/auth';
 import { ApiError } from '@/lib/http';
 import { validateEmail } from '@/lib/validation';
 
@@ -22,6 +23,8 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
 
   const expirou = params.get('expirou') === '1';
   const proximo = params.get('proximo');
@@ -35,6 +38,7 @@ function LoginForm() {
       return;
     }
     setErrors({});
+    setUnverifiedEmail(null);
     setLoading(true);
 
     try {
@@ -47,6 +51,8 @@ function LoginForm() {
             email: err.fieldError('email'),
             password: err.fieldError('password'),
           });
+        } else if (err.status === 403 && err.code === 'email_not_verified') {
+          setUnverifiedEmail(email.trim());
         } else if (err.status === 401) {
           toast.error('Email ou senha incorretos.');
         } else {
@@ -57,6 +63,19 @@ function LoginForm() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function onResend() {
+    if (!unverifiedEmail) return;
+    setResending(true);
+    try {
+      await authApi.resendVerification(unverifiedEmail);
+      toast.success('E-mail de confirmação reenviado. Confira sua caixa de entrada.');
+    } catch {
+      toast.error('Não conseguimos reenviar agora. Tente em instantes.');
+    } finally {
+      setResending(false);
     }
   }
 
@@ -76,6 +95,24 @@ function LoginForm() {
       {expirou && (
         <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-ink-soft">
           Sua sessão expirou. Entre novamente para continuar.
+        </div>
+      )}
+
+      {unverifiedEmail && (
+        <div className="mb-4 rounded-lg border border-sky-200 bg-sky-100 px-4 py-3 text-sm text-ink-soft">
+          <p className="font-medium text-ink">Confirme seu e-mail para entrar.</p>
+          <p className="mt-1">
+            Enviamos um link de confirmação para{' '}
+            <strong className="text-ink">{unverifiedEmail}</strong> quando você criou a conta.
+          </p>
+          <button
+            type="button"
+            onClick={onResend}
+            disabled={resending}
+            className="mt-2 font-medium text-purple-600 hover:underline disabled:opacity-60"
+          >
+            {resending ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
+          </button>
         </div>
       )}
 
