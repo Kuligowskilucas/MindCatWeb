@@ -60,6 +60,9 @@ export default function AdminPage() {
               </Button>
             }
           />
+          <button onClick={() => { throw new Error("Teste Sentry produção"); }}>
+  teste sentry
+</button>
         </Card>
       ) : !items || items.length === 0 ? (
         <Card>
