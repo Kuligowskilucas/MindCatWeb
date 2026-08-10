@@ -44,9 +44,6 @@ export default function AdminPage() {
             {f.label}
           </button>
         ))}
-        <button onClick={() => { throw new Error("Teste Sentry produção"); }}>
-  teste sentry
-</button>
       </div>
 
       {isLoading ? (

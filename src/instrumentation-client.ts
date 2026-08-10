@@ -72,6 +72,8 @@ function scrubEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
 
   if (event.user) {
     event.user = { id: event.user.id };
+    delete event.user.geo;
+    delete event.user.ip_address;
   }
 
   if (event.extra) {
