@@ -8,9 +8,14 @@ import { useCreateDiaryEntry, diaryErrorMessage } from '@/hooks/useDiary';
 
 const MAX = 50000; // espelha StoreDiaryRequest (content max:50000).
 
-export function DiaryComposer() {
+interface DiaryComposerProps {
+  /** Senha em memória; reenviada ao gravar (backend exige, 403 se errada). */
+  password: string;
+}
+
+export function DiaryComposer({ password }: DiaryComposerProps) {
   const toast = useToast();
-  const create = useCreateDiaryEntry();
+  const create = useCreateDiaryEntry(password);
   const fieldId = useId();
 
   const [content, setContent] = useState('');
@@ -43,7 +48,7 @@ export function DiaryComposer() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           disabled={create.isPending}
-          placeholder="Escreva o que estiver sentindo. Escrever não pede a senha; reler, sim."
+          placeholder="Escreva o que estiver sentindo."
           className="w-full resize-y rounded-lg border border-line bg-surface px-3.5 py-3 text-sm text-ink placeholder:text-ink-faint transition-colors hover:border-purple-200 disabled:bg-purple-50 disabled:text-ink-faint"
         />
 

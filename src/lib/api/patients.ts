@@ -25,24 +25,12 @@ export interface SummaryMood {
   recorded_at: string;
 }
 
-/**
- * Entrada de diário no resumo: SÓ id e data. O conteúdo do diário NUNCA é
- * exposto ao profissional (o backend faz select('id','created_at')). A tela
- * respeita isso: mostra quando o paciente escreveu, jamais o texto.
- */
-export interface SummaryDiaryEntry {
-  id: number;
-  created_at: string;
-}
-
 export interface PatientSummary {
   patient: { id: number; name: string };
   /** Até 14 registros recentes. NÃO é o total histórico. */
   moods: SummaryMood[];
   /** Contagem real de exercícios concluídos (não é limitada). */
   exercises_completed: number;
-  /** Até 10 entradas recentes (id + data). NÃO é o total histórico. */
-  diary: SummaryDiaryEntry[];
 }
 
 export const patientsApi = {

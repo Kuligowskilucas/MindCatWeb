@@ -12,11 +12,11 @@ export const diaryApi = {
     http.post<DiaryEntry[]>('/diary/list', { diary_password }),
 
   /**
-   * POST /diary — ESCREVER não exige senha (desabafo rápido é livre).
-   * Backend responde { message, entry }.
+   * POST /diary — ESCREVER também exige a senha do diário no corpo (403 se errada),
+   * como ler e excluir. Backend responde { message, entry }.
    */
-  create: (content: string) =>
-    http.post<{ message: string; entry: DiaryEntry }>('/diary', { content }),
+  create: (content: string, diary_password: string) =>
+    http.post<{ message: string; entry: DiaryEntry }>('/diary', { content, diary_password }),
 
   /**
    * DELETE /diary/{id} — EXCLUIR exige a senha no corpo (403 se errada).

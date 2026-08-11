@@ -88,30 +88,6 @@ export default function PacienteDetalhePage() {
             </CardBody>
           </Card>
 
-          <Card>
-            <CardHeader
-              title="Diário"
-              description="Você vê quando o paciente escreveu — nunca o conteúdo."
-            />
-            <CardBody>
-              {data.diary.length === 0 ? (
-                <p className="text-sm text-ink-soft">Nenhuma entrada.</p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {data.diary.map((d) => (
-                    <li
-                      key={d.id}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span className="text-ink-soft">Entrada registrada</span>
-                      <span className="text-ink-faint">{formatDate(d.created_at)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardBody>
-          </Card>
-
           <div className="flex justify-end">
             <Link href="/pro/tarefas">
               <Button variant="secondary">Criar tarefa</Button>
@@ -182,13 +158,5 @@ function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
-  });
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
   });
 }

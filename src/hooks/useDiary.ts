@@ -49,12 +49,12 @@ export function useDiaryEntries(password: string | null) {
   });
 }
 
-/** Escreve uma entrada. Não exige senha. Invalida a lista pra recarregar. */
-export function useCreateDiaryEntry() {
+/** Escreve uma entrada. Exige a senha em memória. Invalida a lista pra recarregar. */
+export function useCreateDiaryEntry(password: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (content: string) => diaryApi.create(content),
+    mutationFn: (content: string) => diaryApi.create(content, password),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DIARY_KEY });
     },

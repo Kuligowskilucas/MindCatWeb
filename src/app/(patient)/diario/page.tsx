@@ -66,7 +66,7 @@ export default function DiarioPage() {
         />
       ) : (
         <>
-          <DiaryComposer />
+          <DiaryComposer password={password} />
           <DiaryReader password={password} />
         </>
       )}
