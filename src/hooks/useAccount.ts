@@ -33,12 +33,6 @@ export function useUpdateConsent() {
   });
 }
 
-export function useDeleteAccount() {
-  return useMutation({
-    mutationFn: () => accountApi.remove(),
-  });
-}
-
 /** Traduz o erro da API em texto pro usuário. */
 export function accountErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
