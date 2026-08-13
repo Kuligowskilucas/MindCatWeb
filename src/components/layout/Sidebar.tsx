@@ -35,6 +35,7 @@ const NAV: Record<NavKind, NavItem[]> = {
   ],
   admin: [
     { href: '/admin', label: 'Validação CRP', icon: ProfileIcon },
+    { href: '/admin/auditoria', label: 'Auditoria', icon: TasksIcon },
   ],
 };
 
