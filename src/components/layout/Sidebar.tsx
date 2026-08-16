@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ComponentType, type SVGProps } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Dialog } from '@/components/ui/Dialog';
 import { cn } from '@/lib/cn';
-import { HomeIcon, DiaryIcon, TasksIcon, ProfileIcon, PatientsIcon } from '@/components/icons';
+import { HomeIcon, DiaryIcon, TasksIcon, ProfileIcon, PatientsIcon, MoonIcon, SunIcon } from '@/components/icons';
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -53,6 +54,7 @@ export function SidebarNav({
 }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   const items = NAV[kind];
@@ -106,6 +108,13 @@ export function SidebarNav({
           <p className="truncate text-sm font-medium text-ink">{user?.name}</p>
           <p className="truncate text-xs text-ink-faint">{user?.email}</p>
         </div>
+        <button
+          onClick={toggleTheme}
+          className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-ink-soft hover:bg-purple-50 hover:text-ink"
+        >
+          {theme === 'dark' ? <SunIcon aria-hidden className="h-5 w-5 shrink-0" /> : <MoonIcon aria-hidden className="h-5 w-5 shrink-0" />}
+          {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+        </button>
         <button onClick={() => setConfirmLogout(true)} className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-ink-soft hover:bg-purple-50 hover:text-ink">
           Sair
         </button>

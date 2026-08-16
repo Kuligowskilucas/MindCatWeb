@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Fraunces } from 'next/font/google';
 import Image from 'next/image';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 
 
@@ -28,7 +29,7 @@ const ctaPrimary =
   'inline-flex h-12 items-center justify-center rounded-lg bg-purple-400 px-6 ' +
   'text-base font-medium text-white transition-colors hover:bg-purple-500 active:bg-purple-600';
 const ctaSecondary =
-  'inline-flex h-12 items-center justify-center rounded-lg border border-purple-200 bg-white px-6 ' +
+  'inline-flex h-12 items-center justify-center rounded-lg border border-purple-200 bg-surface px-6 ' +
   'text-base font-medium text-purple-600 transition-colors hover:bg-purple-50 active:bg-purple-100';
 
 type Mood = 1 | 2 | 3 | 4 | 5;
@@ -133,6 +134,7 @@ export default function Home() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Wordmark />
         <nav className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
           <Link
             href="/login"
             className="rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-purple-50 hover:text-purple-600"
@@ -223,7 +225,7 @@ export default function Home() {
               diário, que continua privado. O consultório ganha continuidade nos
               dias entre uma consulta e outra.
             </p>
-            <p className="mt-4 rounded-xl border border-purple-200/60 bg-white/60 p-4 text-sm text-ink-soft">
+            <p className="mt-4 rounded-xl border border-purple-200/60 bg-surface/60 p-4 text-sm text-ink-soft">
               O acesso profissional passa por uma validação do seu registro
               (CRP) antes de liberar os atendimentos. Você cria a conta, envia os
               comprovantes e nossa equipe confirma o cadastro.

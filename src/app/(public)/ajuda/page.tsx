@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export const metadata: Metadata = {
   title: 'Ajuda em momentos difíceis — MindCat',
@@ -45,11 +46,12 @@ export default function AjudaPage() {
   return (
     <div className="min-h-dvh">
       <header className="border-b border-line">
-        <div className="mx-auto flex max-w-3xl items-center px-6 py-5">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
           <Link href="/" className="inline-flex items-center gap-2">
             <Image src="/icone.png" alt="" width={24} height={24} className="h-6 w-6" />
             <span className="text-lg font-semibold tracking-tight text-ink">MindCat</span>
           </Link>
+          <ThemeToggle />
         </div>
       </header>
 
