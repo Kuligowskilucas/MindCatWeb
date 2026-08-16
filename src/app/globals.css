@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
   /* Marca */
   --color-purple-50:  #f6f1fb;
@@ -40,6 +42,86 @@
 
   --radius-card: 0.875rem;
   --shadow-card: 0 1px 2px rgb(42 35 51 / 0.04), 0 4px 16px rgb(42 35 51 / 0.05);
+}
+
+[data-theme="dark"] {
+  --color-purple-50:  #251d2f;
+  --color-purple-100: #332740;
+  --color-purple-200: #4a3a58;
+  --color-purple-300: #74588f;
+  --color-purple-400: #9468c0;
+  --color-purple-500: #8358ab;
+  --color-purple-600: #cba3e8;
+  --color-purple-700: #e6d0f5;
+
+  --color-sky-100: #1c2c36;
+  --color-sky-200: #24404f;
+  --color-sky-300: #6fb8e0;
+  --color-sky-400: #4a95c4;
+
+  --color-canvas: #17141c;
+  --color-surface: #211d29;
+  --color-line: #332c40;
+
+  --color-ink: #f1eef5;
+  --color-ink-soft: #b8b0c4;
+  --color-ink-faint: #7d7488;
+
+  --color-success: #5cbf8c;
+  --color-danger: #e0687c;
+  --color-warning: #dba24f;
+
+  --color-mood-1: #d98aa8;
+  --color-mood-2: #e0aaa5;
+  --color-mood-3: #e8cfa0;
+  --color-mood-4: #b3d9a8;
+  --color-mood-5: #8fc9a0;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.35);
+}
+
+/*
+ * Sem cookie de tema ainda (primeiro acesso): segue prefers-color-scheme via
+ * CSS puro, sem script decidindo nada antes do paint. Os valores duplicam os
+ * de [data-theme="dark"] de propósito — assim que o usuário usa o toggle, o
+ * cookie grava data-theme explícito e este bloco para de bater (:not([data-theme])).
+ */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    --color-purple-50:  #251d2f;
+    --color-purple-100: #332740;
+    --color-purple-200: #4a3a58;
+    --color-purple-300: #74588f;
+    --color-purple-400: #9468c0;
+    --color-purple-500: #8358ab;
+    --color-purple-600: #cba3e8;
+    --color-purple-700: #e6d0f5;
+
+    --color-sky-100: #1c2c36;
+    --color-sky-200: #24404f;
+    --color-sky-300: #6fb8e0;
+    --color-sky-400: #4a95c4;
+
+    --color-canvas: #17141c;
+    --color-surface: #211d29;
+    --color-line: #332c40;
+
+    --color-ink: #f1eef5;
+    --color-ink-soft: #b8b0c4;
+    --color-ink-faint: #7d7488;
+
+    --color-success: #5cbf8c;
+    --color-danger: #e0687c;
+    --color-warning: #dba24f;
+
+    --color-mood-1: #d98aa8;
+    --color-mood-2: #e0aaa5;
+    --color-mood-3: #e8cfa0;
+    --color-mood-4: #b3d9a8;
+    --color-mood-5: #8fc9a0;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.35);
+  }
 }
 
 html, body {

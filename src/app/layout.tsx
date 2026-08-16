@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { Providers } from './providers';
+import { THEME_COOKIE, type Theme } from '@/lib/theme';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -8,11 +10,15 @@ export const metadata: Metadata = {
   description: 'Cuidado contínuo entre uma sessão e outra.',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get(THEME_COOKIE)?.value;
+  const theme: Theme | undefined = themeCookie === 'light' || themeCookie === 'dark' ? themeCookie : undefined;
+
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-theme={theme}>
       <body className="min-h-dvh antialiased">
-        <Providers>{children}</Providers>
+        <Providers initialTheme={theme}>{children}</Providers>
       </body>
     </html>
   );

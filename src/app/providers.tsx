@@ -4,9 +4,11 @@ import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '@/lib/http';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import type { Theme } from '@/lib/theme';
 import { ToastProvider } from '@/components/ui/Toast';
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({ children, initialTheme }: { children: ReactNode; initialTheme?: Theme }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -25,10 +27,12 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <AuthProvider>{children}</AuthProvider>
-      </ToastProvider>
-    </QueryClientProvider>
+    <ThemeProvider initialTheme={initialTheme}>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
