@@ -150,7 +150,7 @@ export default function RegistroPage() {
               active={role === 'pro'}
               onClick={() => setRole('pro')}
               emoji="👩‍⚕️"
-              label="Psicólogo(a)"
+              label="Terapeuta"
             />
           </div>
           {role === 'pro' && (

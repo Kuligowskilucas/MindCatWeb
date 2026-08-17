@@ -30,7 +30,7 @@ export function ConsentCard() {
     <Card>
       <CardHeader
         title="Privacidade"
-        description="Você controla se seu psicólogo pode ver seus dados no MindCat."
+        description="Você controla se seu terapeuta pode ver seus dados no MindCat."
       />
       <CardBody>
         {isLoading ? (
@@ -41,10 +41,10 @@ export function ConsentCard() {
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-sm font-medium text-ink">
-                Compartilhar meus dados com meu psicólogo
+                Compartilhar meus dados com meu terapeuta
               </p>
               <p className="mt-0.5 text-sm text-ink-soft">
-                Quando desligado, seu psicólogo deixa de ver suas tarefas e
+                Quando desligado, seu terapeuta deixa de ver suas tarefas e
                 resumo. Seu diário nunca é compartilhado.
               </p>
             </div>
@@ -53,7 +53,7 @@ export function ConsentCard() {
               type="button"
               role="switch"
               aria-checked={enabled}
-              aria-label="Compartilhar meus dados com meu psicólogo"
+              aria-label="Compartilhar meus dados com meu terapeuta"
               disabled={updateConsent.isPending}
               onClick={toggle}
               className={cn(
