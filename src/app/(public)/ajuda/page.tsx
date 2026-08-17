@@ -64,7 +64,7 @@ export default function AjudaPage() {
           </p>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft">
             Nada do que você escreve aqui aciona atendimento. Ninguém lê seus
-            registros em tempo real — nem a nossa equipe, nem o psicólogo
+            registros em tempo real — nem a nossa equipe, nem o terapeuta
             vinculado à sua conta, que vê o que você registrou apenas quando
             abre o painel dele. Se a situação é urgente, use um dos contatos
             abaixo.

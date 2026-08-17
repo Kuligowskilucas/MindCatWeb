@@ -14,7 +14,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: 'MindCat — cuidado que continua entre uma sessão e outra',
   description:
-    'Acompanhe seu humor, guarde seu diário e siga as tarefas combinadas com seu psicólogo. Todos os dias, não só na consulta.',
+    'Acompanhe seu humor, guarde seu diário e siga as tarefas combinadas com seu terapeuta. Todos os dias, não só na consulta.',
   openGraph: {
     title: 'MindCat',
     description: 'Cuidado contínuo entre uma sessão e outra.',
@@ -160,14 +160,14 @@ export default function Home() {
         </h1>
         <p className="rise d2 mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
           O MindCat acompanha seu humor, guarda seu diário e organiza as tarefas
-          combinadas com seu psicólogo todos os dias, não só na consulta.
+          combinadas com seu terapeuta todos os dias, não só na consulta.
         </p>
         <div className="rise d3 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/registro" className={ctaPrimary}>
             Criar conta
           </Link>
           <Link href="#para-profissionais" className={ctaSecondary}>
-            Sou psicólogo(a)
+            Sou terapeuta
           </Link>
         </div>
         <p className="rise d3 mt-3 text-sm text-ink-faint">Grátis durante o lançamento.</p>
@@ -213,7 +213,7 @@ export default function Home() {
           }}
         >
           <div className="max-w-2xl">
-            <p className="mb-3 text-sm font-medium text-purple-600">Para psicólogos(as)</p>
+            <p className="mb-3 text-sm font-medium text-purple-600">Para terapeutas</p>
             <h2 className={`text-3xl leading-tight tracking-tight text-ink ${fraunces.className}`}>
               Acompanhe seus pacientes entre as sessões.
             </h2>

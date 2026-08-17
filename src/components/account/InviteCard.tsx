@@ -52,8 +52,8 @@ export function InviteCard() {
   return (
     <Card>
       <CardHeader
-        title="Convidar meu psicólogo"
-        description="Gere um código e envie ao seu psicólogo para que ele possa acompanhar você no MindCat."
+        title="Convidar meu terapeuta"
+        description="Gere um código e envie ao seu terapeuta para que ele possa acompanhar você no MindCat."
       />
       <CardBody>
         {profileLoading || inviteLoading ? (
@@ -62,7 +62,7 @@ export function InviteCard() {
           </div>
         ) : !consented ? (
           <p className="text-sm text-ink-soft">
-            Ative o compartilhamento de dados acima para poder convidar seu psicólogo.
+            Ative o compartilhamento de dados acima para poder convidar seu terapeuta.
           </p>
         ) : invite ? (
           <div className="space-y-4">

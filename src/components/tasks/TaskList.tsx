@@ -56,7 +56,7 @@ export function TaskList() {
       <Card>
         <EmptyState
           title="Nenhuma tarefa por enquanto"
-          description="Quando seu psicólogo criar tarefas terapêuticas para você, elas aparecem aqui."
+          description="Quando seu terapeuta criar tarefas terapêuticas para você, elas aparecem aqui."
         />
       </Card>
     );
