@@ -44,7 +44,7 @@ export const authApi = {
 
   resendOtp: (challenge: string) => http.post<{ message: string }>('/login/resend-otp', { challenge }),
 
-  register: (data: { name: string; email: string; password: string; role: Role }) =>
+  register: (data: { name: string; email: string; password: string; role: Role; accept_terms: boolean }) =>
     http.post<RegisterResponse>('/register', data),
 
   verifyEmail: (id: string, hash: string, query: string) =>

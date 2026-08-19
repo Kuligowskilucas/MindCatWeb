@@ -14,7 +14,7 @@ interface AuthContextValue {
   /** true enquanto a checagem inicial de sessão não terminou. */
   initializing: boolean;
   login: (email: string, password: string) => Promise<LoginResult>;
-  register: (data: { name: string; email: string; password: string; role: Role; }) => Promise<User>;
+  register: (data: { name: string; email: string; password: string; role: Role; accept_terms: boolean }) => Promise<User>;
   verifyTwoFactor: (challenge: string, code: string) => Promise<User>;
   resendTwoFactor: (challenge: string) => Promise<void>;
   logout: () => Promise<void>;

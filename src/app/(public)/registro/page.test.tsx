@@ -47,6 +47,7 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('Email'), 'lucas@teste.com');
   await user.type(screen.getByLabelText('Senha'), 'Senha123');
   await user.type(screen.getByLabelText('Confirmar senha'), 'Senha123');
+  await user.click(screen.getByRole('checkbox'));
 }
 
 beforeEach(() => {
@@ -70,6 +71,25 @@ describe('RegistroPage', () => {
     expect(await screen.findByText('Confira seu e-mail')).toBeInTheDocument();
     expect(screen.getByText('lucas@teste.com')).toBeInTheDocument();
     expect(mocks.register).toHaveBeenCalledTimes(1);
+  });
+
+  it('exige aceitar os termos antes de cadastrar', async () => {
+    const user = userEvent.setup();
+    render(<RegistroPage />);
+
+    await user.type(screen.getByLabelText('Nome completo'), 'Lucas Silva');
+    await user.type(screen.getByLabelText('Email'), 'lucas@teste.com');
+    await user.type(screen.getByLabelText('Senha'), 'Senha123');
+    await user.type(screen.getByLabelText('Confirmar senha'), 'Senha123');
+
+    await user.click(screen.getByRole('button', { name: 'Criar conta' }));
+
+    expect(
+      await screen.findByText(
+        'É necessário aceitar os Termos de Uso e a Política de Privacidade.',
+      ),
+    ).toBeInTheDocument();
+    expect(mocks.register).not.toHaveBeenCalled();
   });
 
   it('reenvia o e-mail de confirmação a partir do estado de sucesso', async () => {

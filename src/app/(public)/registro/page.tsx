@@ -19,6 +19,7 @@ type FieldErrors = {
   email?: string;
   password?: string;
   passwordConfirm?: string;
+  acceptTerms?: string;
 };
 
 export default function RegistroPage() {
@@ -30,6 +31,7 @@ export default function RegistroPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -42,6 +44,9 @@ export default function RegistroPage() {
       password: validatePassword(password) ?? undefined,
       passwordConfirm:
         password !== passwordConfirm ? 'As senhas não coincidem.' : undefined,
+      acceptTerms: !acceptTerms
+        ? 'É necessário aceitar os Termos de Uso e a Política de Privacidade.'
+        : undefined,
     };
     setErrors(next);
     return !Object.values(next).some(Boolean);
@@ -58,6 +63,7 @@ export default function RegistroPage() {
         email: email.trim(),
         password,
         role,
+        accept_terms: acceptTerms,
       });
       setSent(true);
     } catch (err) {
@@ -198,6 +204,43 @@ export default function RegistroPage() {
           error={errors.passwordConfirm}
           disabled={loading}
         />
+
+        <div>
+          <label className="flex items-start gap-2.5 text-sm text-ink-soft">
+            <input
+              type="checkbox"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              disabled={loading}
+              aria-invalid={errors.acceptTerms ? true : undefined}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-line text-purple-600 focus-visible:outline-purple-600"
+            />
+            <span>
+              Li e aceito os{' '}
+              <Link
+                href="/termos"
+                target="_blank"
+                className="font-medium text-purple-600 hover:underline"
+              >
+                Termos de Uso
+              </Link>{' '}
+              e a{' '}
+              <Link
+                href="/privacidade"
+                target="_blank"
+                className="font-medium text-purple-600 hover:underline"
+              >
+                Política de Privacidade
+              </Link>
+              .
+            </span>
+          </label>
+          {errors.acceptTerms && (
+            <p role="alert" className="mt-1.5 text-sm text-danger">
+              {errors.acceptTerms}
+            </p>
+          )}
+        </div>
 
         <Button type="submit" fullWidth loading={loading}>
           Criar conta
