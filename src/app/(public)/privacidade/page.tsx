@@ -125,8 +125,8 @@ export default function PrivacidadePage() {
             seus dados, solicitar a exclusão, exportar seus dados
             (portabilidade) e retirar o consentimento de compartilhamento. Para
             exercer esses direitos, escreva para{' '}
-            <a href="mailto:privacidade@mindcat.com.br" className="font-medium text-purple-600 hover:underline">
-              privacidade@mindcat.com.br
+            <a href="mailto:suporte@mindcat.com.br" className="font-medium text-purple-600 hover:underline">
+              suporte@mindcat.com.br
             </a>
             .
           </p>
@@ -144,8 +144,8 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="text-base font-semibold text-ink">12. Contato</h2>
           <p className="mt-2">
-            <a href="mailto:privacidade@mindcat.com.br" className="font-medium text-purple-600 hover:underline">
-              privacidade@mindcat.com.br
+            <a href="mailto:suporte@mindcat.com.br" className="font-medium text-purple-600 hover:underline">
+              suporte@mindcat.com.br
             </a>
           </p>
         </section>

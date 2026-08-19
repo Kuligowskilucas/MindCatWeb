@@ -100,8 +100,8 @@ export default function TermosPage() {
         <section>
           <h2 className="text-base font-semibold text-ink">11. Contato</h2>
           <p className="mt-2">
-            <a href="mailto:privacidade@mindcat.com.br" className="font-medium text-purple-600 hover:underline">
-              privacidade@mindcat.com.br
+            <a href="mailto:suporte@mindcat.com.br" className="font-medium text-purple-600 hover:underline">
+              suporte@mindcat.com.br
             </a>
           </p>
         </section>
