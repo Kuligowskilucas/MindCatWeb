@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (data: { name: string; email: string; password: string; role: Role }) => {
+    async (data: { name: string; email: string; password: string; role: Role; accept_terms: boolean }) => {
       const res = await authApi.register(data);
       return res.user;
     },
