@@ -70,11 +70,10 @@ npm run build
 ## Related repositories
 
 - API: https://github.com/Kuligowskilucas/MindCatApi
-- Mobile client (frozen): https://github.com/Kuligowskilucas/mindcat
 
 ## Status
 
-In active development. Not yet in production. The mobile client is frozen until the web version ships.
+Live in production at mindcat.com.br
 
 ## License
 
