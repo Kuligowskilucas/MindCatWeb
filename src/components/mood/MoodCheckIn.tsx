@@ -4,26 +4,33 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { MoodScale } from './MoodScale';
+import { FeelingPicker } from './FeelingPicker';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
 import { useCreateMood, useTodayMood, moodErrorMessage } from '@/hooks/useMoods';
+import { useFeelings } from '@/hooks/useFeelings';
 import { MOOD_META } from '@/lib/moodMeta';
 import { ApiError } from '@/lib/http';
 import type { MoodLevel } from '@/lib/types';
+
+const SHARED_WITH_PRO_NOTICE =
+  'Seu humor, os sentimentos marcados e a nota ficam visíveis para o profissional vinculado a você. Seu diário nunca é compartilhado.';
 
 export function MoodCheckIn() {
   // TODOS os hooks no topo, antes de qualquer return condicional — senão a
   // ordem dos hooks muda entre renders e o React quebra (Rules of Hooks).
   const { todayMood, isLoading } = useTodayMood();
+  const { data: feelings } = useFeelings();
   const createMood = useCreateMood();
   const toast = useToast();
   const queryClient = useQueryClient();
 
   const [selected, setSelected] = useState<MoodLevel | null>(null);
   const [note, setNote] = useState('');
+  const [selectedFeelings, setSelectedFeelings] = useState<string[]>([]);
 
   if (isLoading) {
     return (
@@ -50,9 +57,22 @@ export function MoodCheckIn() {
               “{todayMood.mood_description}”
             </p>
           )}
+          {todayMood.feelings && todayMood.feelings.length > 0 && (
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {todayMood.feelings.map((feeling) => (
+                <span
+                  key={feeling.slug}
+                  className="rounded-full border border-purple-400 bg-purple-400 px-3.5 py-1.5 text-sm font-medium text-white"
+                >
+                  {feeling.label}
+                </span>
+              ))}
+            </div>
+          )}
           <p className="mt-4 text-xs text-ink-faint">
             Você já registrou seu humor de hoje. Volte amanhã.
           </p>
+          <p className="mt-2 max-w-sm text-xs text-ink-faint">{SHARED_WITH_PRO_NOTICE}</p>
         </CardBody>
       </Card>
     );
@@ -64,10 +84,12 @@ export function MoodCheckIn() {
       await createMood.mutateAsync({
         mood_level: selected,
         mood_description: note.trim() || undefined,
+        feelings: selectedFeelings.length ? selectedFeelings : undefined,
       });
       toast.success('Humor registrado. Cuide-se hoje.');
       setSelected(null);
       setNote('');
+      setSelectedFeelings([]);
     } catch (err) {
       toast.error(moodErrorMessage(err));
       // Se foi 409 (já registrou hoje), a lista está desatualizada:
@@ -101,6 +123,23 @@ export function MoodCheckIn() {
               onChange={(e) => setNote(e.target.value)}
               disabled={createMood.isPending}
             />
+
+            {feelings && feelings.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-sm font-medium text-ink">
+                  O que você sentiu hoje? (opcional)
+                </p>
+                <FeelingPicker
+                  feelings={feelings}
+                  selected={selectedFeelings}
+                  onChange={setSelectedFeelings}
+                  disabled={createMood.isPending}
+                />
+              </div>
+            )}
+
+            <p className="text-xs text-ink-faint">{SHARED_WITH_PRO_NOTICE}</p>
+
             <Button
               fullWidth
               loading={createMood.isPending}

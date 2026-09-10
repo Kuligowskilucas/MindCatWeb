@@ -18,7 +18,7 @@ export const moodsApi = {
     return http.get<Paginated<Mood>>(`/moods${suffix}`);
   },
 
-  create: (data: { mood_level: MoodLevel; mood_description?: string }) =>
+  create: (data: { mood_level: MoodLevel; mood_description?: string; feelings?: string[] }) =>
     http.post<Mood>('/moods', data),
 
   remove: (id: number) => http.delete<{ message: string }>(`/moods/${id}`),

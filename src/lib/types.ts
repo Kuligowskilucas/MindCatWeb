@@ -32,6 +32,12 @@ export interface User {
 
 export type MoodLevel = 1 | 2 | 3 | 4 | 5;
 
+export interface Feeling {
+  id: number;
+  slug: string;
+  label: string;
+}
+
 export interface Mood {
   id: number;
   user_id: number;
@@ -40,6 +46,7 @@ export interface Mood {
   recorded_at: string;
   created_at: string;
   updated_at: string;
+  feelings?: Feeling[];
 }
 
 export interface DiaryEntry {

@@ -27,7 +27,7 @@ export function useCreateMood() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { mood_level: MoodLevel; mood_description?: string }) =>
+    mutationFn: (data: { mood_level: MoodLevel; mood_description?: string; feelings?: string[] }) =>
       moodsApi.create(data),
     onSuccess: (created) => {
       queryClient.setQueryData<Paginated<Mood>>(MOODS_KEY, (old) =>
