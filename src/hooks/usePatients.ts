@@ -14,10 +14,10 @@ export function usePatients() {
   });
 }
 
-export function usePatientSummary(patientId: number) {
+export function usePatientSummary(patientId: number, days: number = 30) {
   return useQuery({
-    queryKey: ['patient-summary', patientId],
-    queryFn: () => patientsApi.summary(patientId),
+    queryKey: ['patient-summary', patientId, days],
+    queryFn: () => patientsApi.summary(patientId, days),
     // id inválido na URL (ex.: /pro/paciente/abc) → não dispara request.
     enabled: Number.isFinite(patientId) && patientId > 0,
     // 403 (consentimento revogado) e 404 são respostas legítimas, não falhas

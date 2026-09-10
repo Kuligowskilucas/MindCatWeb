@@ -6,7 +6,7 @@ import type { Mood, MoodLevel } from '@/lib/types';
 
 interface MoodChartProps {
   moods: Mood[];
-  days?: 7 | 30;
+  days?: 7 | 30 | 90;
 }
 
 interface DayPoint {
@@ -16,7 +16,7 @@ interface DayPoint {
 }
 
 /** Últimos `days` dias, do mais antigo (esq) ao hoje (dir). */
-export function buildRange(moods: Mood[], days: 7 | 30): DayPoint[] {
+export function buildRange(moods: Mood[], days: 7 | 30 | 90): DayPoint[] {
   // Índice rápido: dia → humor (o mais recente do dia, se houver vários).
   const byDay = new Map<string, Mood>();
   for (const m of moods) {
@@ -34,8 +34,9 @@ export function buildRange(moods: Mood[], days: 7 | 30): DayPoint[] {
     const key = localDayKey(d);
     const mood = byDay.get(key);
     const index = days - 1 - i;
-    // Com 30 dias só rotula a cada 5 dias + hoje — senão o eixo vira ilegível.
-    const showLabel = days === 7 || index % 5 === 0 || i === 0;
+    // Com mais de uma semana só rotula a cada N dias + hoje — senão o eixo vira ilegível.
+    const labelStep = days === 90 ? 10 : 5;
+    const showLabel = days === 7 || index % labelStep === 0 || i === 0;
     range.push({
       key,
       label: days === 7 ? weekdayShort(d) : showLabel ? shortDayMonth(d) : '',
@@ -45,17 +46,18 @@ export function buildRange(moods: Mood[], days: 7 | 30): DayPoint[] {
   return range;
 }
 
-// Geometria do SVG — mais largo com 30 dias pra não esmagar os pontos.
+// Geometria do SVG — mais largo com janelas maiores pra não esmagar os pontos.
 const H = 160;
 const PAD_X = 24;
 const PAD_TOP = 16;
 const PAD_BOTTOM = 28;
+const WIDTH_BY_DAYS: Record<7 | 30 | 90, number> = { 7: 320, 30: 640, 90: 960 };
 
-function widthFor(days: 7 | 30): number {
-  return days === 30 ? 640 : 320;
+function widthFor(days: 7 | 30 | 90): number {
+  return WIDTH_BY_DAYS[days];
 }
 
-function xFor(index: number, days: 7 | 30): number {
+function xFor(index: number, days: 7 | 30 | 90): number {
   const plotW = widthFor(days) - PAD_X * 2;
   return PAD_X + (plotW / (days - 1)) * index;
 }

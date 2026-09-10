@@ -1,21 +1,27 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { MoodChart } from '@/components/mood/MoodChart';
 import { usePatientSummary } from '@/hooks/usePatients';
 import { ApiError } from '@/lib/http';
+import { cn } from '@/lib/cn';
 import { ChevronLeftIcon } from '@/components/icons';
 import { MOOD_META } from '@/lib/moodMeta';
-import type { MoodLevel } from '@/lib/types';
+import type { MoodLevel, Mood } from '@/lib/types';
+
+const RANGE_OPTIONS = [30, 90] as const;
 
 export default function PacienteDetalhePage() {
   const params = useParams<{ id: string }>();
   const patientId = Number(params.id);
-  const { data, isLoading, error } = usePatientSummary(patientId);
+  const [days, setDays] = useState<30 | 90>(30);
+  const { data, isLoading, error } = usePatientSummary(patientId, days);
 
   return (
     <div className="space-y-6">
@@ -35,9 +41,34 @@ export default function PacienteDetalhePage() {
         <SummaryError error={error} />
       ) : data ? (
         <>
-          <header>
-            <h1 className="text-2xl font-semibold text-ink">{data.patient.name}</h1>
-            <p className="mt-1 text-sm text-ink-soft">Resumo clínico</p>
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold text-ink">{data.patient.name}</h1>
+              <p className="mt-1 text-sm text-ink-soft">Resumo clínico</p>
+            </div>
+
+            <div
+              role="group"
+              aria-label="Período do resumo"
+              className="flex gap-1 rounded-lg border border-line p-1"
+            >
+              {RANGE_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={days === option}
+                  onClick={() => setDays(option)}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                    days === option
+                      ? 'bg-purple-400 text-white'
+                      : 'text-ink-soft hover:bg-purple-50',
+                  )}
+                >
+                  {option} dias
+                </button>
+              ))}
+            </div>
           </header>
 
           <Card>
@@ -51,35 +82,96 @@ export default function PacienteDetalhePage() {
 
           <Card>
             <CardHeader
-              title="Humor recente"
-              description="Últimos registros do paciente (mais recentes primeiro)."
+              title="Humor no período"
+              description={`Últimos ${data.range_days} dias`}
             />
             <CardBody>
               {data.moods.length === 0 ? (
-                <p className="text-sm text-ink-soft">Nenhum registro de humor ainda.</p>
+                <p className="py-6 text-center text-sm text-ink-soft">
+                  Sem registros de humor nesse período.
+                </p>
+              ) : (
+                <MoodChart moods={toChartMoods(data.moods, data.patient.id)} days={days} />
+              )}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Sentimentos mais frequentes"
+              description={`Nos últimos ${data.range_days} dias`}
+            />
+            <CardBody>
+              {data.feelings_frequency.length === 0 ? (
+                <p className="text-sm text-ink-soft">
+                  Nenhum sentimento marcado nesse período.
+                </p>
               ) : (
                 <ul className="flex flex-wrap gap-2">
+                  {data.feelings_frequency.map((f) => (
+                    <li
+                      key={f.slug}
+                      className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm text-ink"
+                    >
+                      <span>{f.label}</span>
+                      <span className="text-xs font-semibold text-ink-faint">{f.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Registros recentes"
+              description="Histórico do paciente nesse período (mais recentes primeiro)."
+            />
+            <CardBody>
+              {data.moods.length === 0 ? (
+                <p className="text-sm text-ink-soft">
+                  Sem registros de humor nesse período.
+                </p>
+              ) : (
+                <ul className="space-y-3">
                   {data.moods.map((m) => {
                     const meta = MOOD_META[m.mood_level as MoodLevel];
                     return (
-                      <li
-                        key={m.id}
-                        title={meta?.label}
-                        className="flex min-w-[64px] flex-col items-center gap-0.5 rounded-lg border border-line px-3 py-2"
-                        // Tom suave do humor como fundo — mesma escala não-alarmante
-                        // do app (nível 1 não é vermelho de erro).
-                        style={{
-                          backgroundColor: meta
-                            ? `color-mix(in srgb, ${meta.tint} 14%, white)`
-                            : undefined,
-                        }}
-                      >
-                        <span className="text-xs font-medium text-ink">
-                          {meta?.label ?? m.mood_level}
-                        </span>
-                        <span className="text-[10px] text-ink-faint">
-                          {formatDay(m.recorded_at)}
-                        </span>
+                      <li key={m.id} className="rounded-lg border border-line p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <span
+                            className="rounded-full px-2.5 py-1 text-xs font-medium text-ink"
+                            // Tom suave do humor como fundo — mesma escala não-alarmante
+                            // do app (nível 1 não é vermelho de erro, eufórico não é "bom").
+                            style={{
+                              backgroundColor: meta
+                                ? `color-mix(in srgb, ${meta.tint} 18%, white)`
+                                : undefined,
+                            }}
+                          >
+                            {meta?.label ?? m.mood_level}
+                          </span>
+                          <span className="text-xs text-ink-faint">
+                            {formatDay(m.recorded_at)}
+                          </span>
+                        </div>
+
+                        {m.feelings && m.feelings.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {m.feelings.map((feeling) => (
+                              <span
+                                key={feeling.slug}
+                                className="rounded-full border border-line px-2.5 py-0.5 text-xs text-ink-soft"
+                              >
+                                {feeling.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {m.mood_description && (
+                          <p className="mt-2 text-sm text-ink-soft">“{m.mood_description}”</p>
+                        )}
                       </li>
                     );
                   })}
@@ -97,6 +189,22 @@ export default function PacienteDetalhePage() {
       ) : null}
     </div>
   );
+}
+
+/** Adapta o SummaryMood (resumo do paciente) pro shape que o MoodChart espera. */
+function toChartMoods(
+  moods: { id: number; mood_level: number; mood_description: string | null; recorded_at: string }[],
+  userId: number,
+): Mood[] {
+  return moods.map((m) => ({
+    id: m.id,
+    user_id: userId,
+    mood_level: m.mood_level as MoodLevel,
+    mood_description: m.mood_description,
+    recorded_at: m.recorded_at,
+    created_at: m.recorded_at,
+    updated_at: m.recorded_at,
+  }));
 }
 
 /**
