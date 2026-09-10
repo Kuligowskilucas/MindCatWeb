@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import type { Mood } from '@/lib/types';
 import type { Paginated } from '@/lib/api/moods';
-import { useCreateMood } from '@/hooks/useMoods';
+import { useCreateMood, useMoods } from '@/hooks/useMoods';
 
 const mocks = vi.hoisted(() => ({ create: vi.fn(), list: vi.fn() }));
 
@@ -46,25 +46,33 @@ beforeEach(() => {
   mocks.list.mockResolvedValue(page([]));
 });
 
-describe('useCreateMood — regressão do formato Paginated<T>', () => {
-  it('insere o humor novo em old.data e incrementa total (cache não é array plano)', async () => {
-    const existing = mood({ id: 10, recorded_at: '2026-08-01T10:00:00.000Z' });
-    qc.setQueryData(['moods'], page([existing]));
+describe('useMoods — janela por dias', () => {
+  it('usa uma queryKey por janela e manda per_page pro backend', async () => {
+    renderHook(() => useMoods(30), { wrapper });
 
+    await waitFor(() => expect(mocks.list).toHaveBeenCalled());
+
+    expect(mocks.list).toHaveBeenCalledWith(expect.objectContaining({ per_page: 30 }));
+    expect(qc.getQueryState(['moods', 30])).toBeDefined();
+  });
+});
+
+describe('useCreateMood', () => {
+  it('invalida o prefixo ["moods"] em vez de sobrescrever uma chave fixa', async () => {
+    qc.setQueryData(['moods', 7], page([mood({ id: 10 })]));
     mocks.create.mockResolvedValueOnce(mood({ id: 11 }));
+
+    const invalidateSpy = vi.spyOn(qc, 'invalidateQueries');
 
     const { result } = renderHook(() => useCreateMood(), { wrapper });
     await act(async () => {
       await result.current.mutateAsync({ mood_level: 3 });
     });
 
-    const cache = qc.getQueryData<Paginated<Mood>>(['moods'])!;
-    expect(Array.isArray(cache.data)).toBe(true);
-    expect(cache.data.map((m) => m.id)).toEqual([11, 10]);
-    expect(cache.total).toBe(2);
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['moods'] });
   });
 
-  it('não quebra quando ainda não há página em cache (old undefined)', async () => {
+  it('não quebra quando ainda não há página em cache', async () => {
     mocks.create.mockResolvedValueOnce(mood({ id: 12 }));
 
     const { result } = renderHook(() => useCreateMood(), { wrapper });
@@ -73,6 +81,5 @@ describe('useCreateMood — regressão do formato Paginated<T>', () => {
     });
 
     expect(mocks.create).toHaveBeenCalledTimes(1);
-    expect(qc.getQueryData(['moods'])).toBeUndefined();
   });
 });

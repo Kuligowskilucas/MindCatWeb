@@ -1,11 +1,12 @@
 'use client';
 
 import { MOOD_META } from '@/lib/moodMeta';
-import { localDayKey, weekdayShort } from '@/lib/date';
+import { localDayKey, weekdayShort, shortDayMonth } from '@/lib/date';
 import type { Mood, MoodLevel } from '@/lib/types';
 
 interface MoodChartProps {
   moods: Mood[];
+  days?: 7 | 30;
 }
 
 interface DayPoint {
@@ -14,8 +15,8 @@ interface DayPoint {
   level: MoodLevel | null;
 }
 
-/** Últimos 7 dias, do mais antigo (esq) ao hoje (dir). */
-function buildWeek(moods: Mood[]): DayPoint[] {
+/** Últimos `days` dias, do mais antigo (esq) ao hoje (dir). */
+export function buildRange(moods: Mood[], days: 7 | 30): DayPoint[] {
   // Índice rápido: dia → humor (o mais recente do dia, se houver vários).
   const byDay = new Map<string, Mood>();
   for (const m of moods) {
@@ -26,53 +27,63 @@ function buildWeek(moods: Mood[]): DayPoint[] {
     }
   }
 
-  const days: DayPoint[] = [];
-  for (let i = 6; i >= 0; i--) {
+  const range: DayPoint[] = [];
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const key = localDayKey(d);
     const mood = byDay.get(key);
-    days.push({
+    const index = days - 1 - i;
+    // Com 30 dias só rotula a cada 5 dias + hoje — senão o eixo vira ilegível.
+    const showLabel = days === 7 || index % 5 === 0 || i === 0;
+    range.push({
       key,
-      label: weekdayShort(d),
+      label: days === 7 ? weekdayShort(d) : showLabel ? shortDayMonth(d) : '',
       level: mood ? (mood.mood_level as MoodLevel) : null,
     });
   }
-  return days;
+  return range;
 }
 
-// Geometria do SVG
-const W = 320;
+// Geometria do SVG — mais largo com 30 dias pra não esmagar os pontos.
 const H = 160;
 const PAD_X = 24;
 const PAD_TOP = 16;
 const PAD_BOTTOM = 28;
-const PLOT_W = W - PAD_X * 2;
-const PLOT_H = H - PAD_TOP - PAD_BOTTOM;
 
-function xFor(index: number): number {
-  return PAD_X + (PLOT_W / 6) * index;
+function widthFor(days: 7 | 30): number {
+  return days === 30 ? 640 : 320;
+}
+
+function xFor(index: number, days: 7 | 30): number {
+  const plotW = widthFor(days) - PAD_X * 2;
+  return PAD_X + (plotW / (days - 1)) * index;
 }
 
 /** Nível 1 embaixo, 5 em cima. */
 function yFor(level: MoodLevel): number {
-  return PAD_TOP + PLOT_H - ((level - 1) / 4) * PLOT_H;
+  const plotH = H - PAD_TOP - PAD_BOTTOM;
+  return PAD_TOP + plotH - ((level - 1) / 4) * plotH;
 }
 
-export function MoodChart({ moods }: MoodChartProps) {
-  const week = buildWeek(moods);
-  const points = week
-    .map((d, i) => (d.level ? { ...d, x: xFor(i), y: yFor(d.level) } : null))
+export function MoodChart({ moods, days = 7 }: MoodChartProps) {
+  const W = widthFor(days);
+  const range = buildRange(moods, days);
+  const points = range
+    .map((d, i) => (d.level ? { ...d, index: i, x: xFor(i, days), y: yFor(d.level) } : null))
     .filter((p): p is NonNullable<typeof p> => p !== null);
 
   const hasData = points.length > 0;
 
-  // Linha ligando apenas dias consecutivos com registro.
+  // Só liga pontos de dias adjacentes: reta em cima de um dia sem registro é
+  // dado inventado num gráfico que um profissional vai ler.
   const segments: string[] = [];
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
     const curr = points[i];
-    segments.push(`M ${prev.x} ${prev.y} L ${curr.x} ${curr.y}`);
+    if (curr.index - prev.index === 1) {
+      segments.push(`M ${prev.x} ${prev.y} L ${curr.x} ${curr.y}`);
+    }
   }
 
   return (
@@ -81,7 +92,7 @@ export function MoodChart({ moods }: MoodChartProps) {
         viewBox={`0 0 ${W} ${H}`}
         className="h-auto w-full"
         role="img"
-        aria-label="Gráfico do seu humor nos últimos 7 dias"
+        aria-label={`Gráfico do seu humor nos últimos ${days} dias`}
       >
         {/* Linhas-guia horizontais (níveis 1 a 5) */}
         {([1, 2, 3, 4, 5] as MoodLevel[]).map((lvl) => (
@@ -124,18 +135,21 @@ export function MoodChart({ moods }: MoodChartProps) {
         ))}
 
         {/* Rótulos dos dias */}
-        {week.map((d, i) => (
-          <text
-            key={d.key}
-            x={xFor(i)}
-            y={H - 8}
-            textAnchor="middle"
-            className="fill-[var(--color-ink-faint)]"
-            style={{ fontSize: 10 }}
-          >
-            {d.label}
-          </text>
-        ))}
+        {range.map(
+          (d, i) =>
+            d.label && (
+              <text
+                key={d.key}
+                x={xFor(i, days)}
+                y={H - 8}
+                textAnchor="middle"
+                className="fill-[var(--color-ink-faint)]"
+                style={{ fontSize: 10 }}
+              >
+                {d.label}
+              </text>
+            ),
+        )}
       </svg>
 
       {!hasData && (

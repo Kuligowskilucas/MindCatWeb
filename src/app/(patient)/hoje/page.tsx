@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { MoodCheckIn } from '@/components/mood/MoodCheckIn';
-import { MoodWeekCard } from '@/components/mood/MoodWeekCard';
+import { MoodRangeCard } from '@/components/mood/MoodRangeCard';
 
 export default function HojePage() {
   const { user } = useAuth();
@@ -18,7 +18,7 @@ export default function HojePage() {
       </header>
 
       <MoodCheckIn />
-      <MoodWeekCard />
+      <MoodRangeCard />
     </div>
   );
 }

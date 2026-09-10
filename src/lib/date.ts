@@ -16,3 +16,11 @@ export function weekdayShort(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
 }
+
+/** Rótulo "dd/MM" (fuso local) — eixo do gráfico quando a janela passa de uma semana. */
+export function shortDayMonth(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}`;
+}

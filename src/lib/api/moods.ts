@@ -10,10 +10,11 @@ export interface Paginated<T> {
 }
 
 export const moodsApi = {
-  list: (params?: { from?: string; to?: string }) => {
+  list: (params?: { from?: string; to?: string; per_page?: number }) => {
     const qs = new URLSearchParams();
     if (params?.from) qs.set('from', params.from);
     if (params?.to) qs.set('to', params.to);
+    if (params?.per_page) qs.set('per_page', String(params.per_page));
     const suffix = qs.toString() ? `?${qs}` : '';
     return http.get<Paginated<Mood>>(`/moods${suffix}`);
   },
