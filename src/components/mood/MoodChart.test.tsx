@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { localDayKey } from '@/lib/date';
 import type { Mood } from '@/lib/types';
-import { MoodChart, buildRange, buildWeeklyRange } from './MoodChart';
+import { MoodChart, buildRange, buildWeeklyRange, getDisplayedWindow } from './MoodChart';
 
 function mood(daysAgo: number, level: Mood['mood_level']): Mood {
   const d = new Date();
@@ -20,7 +20,9 @@ function mood(daysAgo: number, level: Mood['mood_level']): Mood {
 
 describe('buildRange', () => {
   it('marca o dia sem registro como level null, mantendo os vizinhos', () => {
-    const moods = [mood(3, 2), mood(1, 4)]; // 2 dias atrás (buraco) fica sem registro
+    // Registro no início da janela (6 dias atrás) evita que ela encurte —
+    // aqui o alvo é o buraco no meio, não a janela adaptativa.
+    const moods = [mood(6, 1), mood(3, 2), mood(1, 4)]; // 2 dias atrás (buraco) fica sem registro
 
     const range = buildRange(moods, 7);
 
@@ -106,5 +108,63 @@ describe('MoodChart com days=90 (janela semanal)', () => {
 
     expect(container.querySelectorAll('path')).toHaveLength(1);
     expect(container.querySelectorAll('circle')).toHaveLength(3);
+  });
+});
+
+describe('buildRange — janela adaptativa', () => {
+  it('encurta a janela quando o primeiro registro é mais recente que o início', () => {
+    // Paciente novo: só há registro nos últimos 5 dias de uma janela de 30.
+    const moods = [mood(4, 3), mood(2, 4), mood(0, 5)];
+
+    const range = buildRange(moods, 30);
+
+    expect(range).toHaveLength(5);
+    expect(range[0].level).toBe(3); // dia do 1º registro vira o começo do eixo
+    expect(range[range.length - 1].level).toBe(5);
+  });
+
+  it('não encurta quando já há registro no início da janela', () => {
+    const moods = [mood(29, 2), mood(0, 5)];
+
+    const range = buildRange(moods, 30);
+
+    expect(range).toHaveLength(30);
+  });
+
+  it('sem nenhum registro, mantém a janela cheia (comportamento inalterado)', () => {
+    const range = buildRange([], 30);
+
+    expect(range).toHaveLength(30);
+    expect(range.every((p) => p.level === null)).toBe(true);
+  });
+});
+
+describe('getDisplayedWindow', () => {
+  it('marca a janela como encurtada e começa no dia do primeiro registro', () => {
+    const moods = [mood(4, 3), mood(0, 5)];
+
+    const window = getDisplayedWindow(moods, 30);
+
+    expect(window.shortened).toBe(true);
+    const expectedStart = new Date();
+    expectedStart.setDate(expectedStart.getDate() - 4);
+    expect(localDayKey(window.start)).toBe(localDayKey(expectedStart));
+  });
+
+  it('não marca como encurtada quando há registro no início da janela', () => {
+    const moods = [mood(29, 2), mood(0, 5)];
+
+    expect(getDisplayedWindow(moods, 30).shortened).toBe(false);
+  });
+
+  it('não marca como encurtada sem nenhum registro', () => {
+    expect(getDisplayedWindow([], 30).shortened).toBe(false);
+  });
+
+  it('no modo de 90 dias, encurta pela semana do primeiro registro', () => {
+    // Só há registro nos últimos dias — bem depois do início da janela de 90.
+    const moods = [mood(3, 4), mood(0, 5)];
+
+    expect(getDisplayedWindow(moods, 90).shortened).toBe(true);
   });
 });

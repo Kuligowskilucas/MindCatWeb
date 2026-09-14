@@ -48,11 +48,23 @@ function buildDayEntries(moods: Mood[], days: number): DayEntry[] {
   return entries;
 }
 
-/** Últimos `days` dias, do mais antigo (esq) ao hoje (dir). */
+/**
+ * Corta o começo da janela até o primeiro item com registro: paciente novo
+ * não pode ler "estável" onde só falta histórico. Sem registro nenhum,
+ * devolve a lista inteira — não há de onde cortar.
+ */
+function trimLeadingEmpty<T extends { level: number | null }>(items: T[]): T[] {
+  const firstDataIndex = items.findIndex((item) => item.level !== null);
+  if (firstDataIndex <= 0) return items;
+  return items.slice(firstDataIndex);
+}
+
+/** Últimos `days` dias, do mais antigo com registro (ou o 1º dia, se não houver nenhum) ao hoje. */
 export function buildRange(moods: Mood[], days: 7 | 30 | 90): MoodPoint[] {
-  const entries = buildDayEntries(moods, days);
+  const entries = trimLeadingEmpty(buildDayEntries(moods, days));
+  const count = entries.length;
   return entries.map((entry, index) => {
-    const i = days - 1 - index;
+    const i = count - 1 - index;
     // Com mais de uma semana só rotula a cada N dias + hoje — senão o eixo vira ilegível.
     const labelStep = days === 90 ? 10 : 5;
     const showLabel = days === 7 || index % labelStep === 0 || i === 0;
@@ -66,28 +78,60 @@ export function buildRange(moods: Mood[], days: 7 | 30 | 90): MoodPoint[] {
 
 const WEEK_SIZE = 7;
 
-/**
- * 90 dias virando ~13 pontos: um por semana, com a média dos níveis
- * registrados nela. Semana sem nenhum registro fica com level null — mesma
- * regra de "sem dado, sem ponto" da visão diária, só que por semana.
- */
-export function buildWeeklyRange(moods: Mood[], days = 90): MoodPoint[] {
+interface WeekEntry {
+  weekStart: Date;
+  level: number | null;
+}
+
+function buildWeekEntries(moods: Mood[], days: number): WeekEntry[] {
   const entries = buildDayEntries(moods, days);
-  const weeks: MoodPoint[] = [];
+  const weeks: WeekEntry[] = [];
   for (let start = 0; start < entries.length; start += WEEK_SIZE) {
     const chunk = entries.slice(start, start + WEEK_SIZE);
     const levels = chunk
       .map((e) => e.level)
       .filter((l): l is MoodLevel => l !== null);
     const avg = levels.length > 0 ? levels.reduce((a, b) => a + b, 0) / levels.length : null;
-    const weekStart = chunk[0].date;
-    weeks.push({
-      key: localDayKey(weekStart),
-      label: shortDayMonth(weekStart),
-      level: avg,
-    });
+    weeks.push({ weekStart: chunk[0].date, level: avg });
   }
   return weeks;
+}
+
+/**
+ * 90 dias virando ~13 pontos: um por semana, com a média dos níveis
+ * registrados nela. Semana sem nenhum registro fica com level null — mesma
+ * regra de "sem dado, sem ponto" da visão diária, só que por semana. As
+ * semanas sem registro no começo da janela são cortadas (ver trimLeadingEmpty).
+ */
+export function buildWeeklyRange(moods: Mood[], days = 90): MoodPoint[] {
+  const weeks = trimLeadingEmpty(buildWeekEntries(moods, days));
+  return weeks.map((w) => ({
+    key: localDayKey(w.weekStart),
+    label: shortDayMonth(w.weekStart),
+    level: w.level,
+  }));
+}
+
+export interface DisplayedWindow {
+  start: Date;
+  end: Date;
+  /** true quando a janela foi encurtada por falta de registro no início. */
+  shortened: boolean;
+}
+
+/** Período (dias ou semanas) que o gráfico está de fato desenhando — pro subtítulo do card. */
+export function getDisplayedWindow(moods: Mood[], days: 7 | 30 | 90): DisplayedWindow {
+  const entries = buildDayEntries(moods, days);
+  const end = entries[entries.length - 1].date; // a janela sempre termina hoje
+
+  if (days === 90) {
+    const weeks = buildWeekEntries(moods, days);
+    const trimmed = trimLeadingEmpty(weeks);
+    return { start: trimmed[0].weekStart, end, shortened: trimmed.length < weeks.length };
+  }
+
+  const trimmed = trimLeadingEmpty(entries);
+  return { start: trimmed[0].date, end, shortened: trimmed.length < entries.length };
 }
 
 // Geometria do SVG — mais largo com janelas maiores pra não esmagar os pontos.
@@ -95,7 +139,7 @@ const H = 160;
 const PAD_X = 24;
 const PAD_TOP = 16;
 const PAD_BOTTOM = 28;
-const LEVEL_LABEL_GUTTER = 64;
+const LEVEL_LABEL_GUTTER = 72;
 const WIDTH_BY_DAYS: Record<7 | 30 | 90, number> = { 7: 320, 30: 640, 90: 960 };
 
 function widthFor(days: 7 | 30 | 90): number {
@@ -187,7 +231,7 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
               dy={3}
               textAnchor="end"
               className="fill-[var(--color-ink-faint)]"
-              style={{ fontSize: 9 }}
+              style={{ fontSize: 10 }}
             >
               {MOOD_META[lvl].label}
             </text>

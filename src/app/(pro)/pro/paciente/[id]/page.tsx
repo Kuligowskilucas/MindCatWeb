@@ -7,10 +7,11 @@ import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { MoodChart } from '@/components/mood/MoodChart';
+import { MoodChart, getDisplayedWindow, type DisplayedWindow } from '@/components/mood/MoodChart';
 import { usePatientSummary } from '@/hooks/usePatients';
 import { ApiError } from '@/lib/http';
 import { cn } from '@/lib/cn';
+import { shortDayMonth } from '@/lib/date';
 import { ChevronLeftIcon } from '@/components/icons';
 import { MOOD_META } from '@/lib/moodMeta';
 import type { MoodLevel, Mood } from '@/lib/types';
@@ -22,6 +23,10 @@ export default function PacienteDetalhePage() {
   const patientId = Number(params.id);
   const [days, setDays] = useState<30 | 90>(30);
   const { data, isLoading, error } = usePatientSummary(patientId, days);
+
+  const chartMoods = data ? toChartMoods(data.moods, data.patient.id) : [];
+  const displayedWindow =
+    data && data.moods.length > 0 ? getDisplayedWindow(chartMoods, days) : null;
 
   return (
     <div className="space-y-6">
@@ -74,11 +79,7 @@ export default function PacienteDetalhePage() {
           <Card>
             <CardHeader
               title="Humor no período"
-              description={
-                days === 90
-                  ? `Últimos ${data.range_days} dias — média semanal`
-                  : `Últimos ${data.range_days} dias`
-              }
+              description={humorSubtitle(days, data.range_days, displayedWindow)}
             />
             <CardBody>
               {data.moods.length === 0 ? (
@@ -86,11 +87,7 @@ export default function PacienteDetalhePage() {
                   Sem registros de humor nesse período.
                 </p>
               ) : (
-                <MoodChart
-                  moods={toChartMoods(data.moods, data.patient.id)}
-                  days={days}
-                  showLevelLabels
-                />
+                <MoodChart moods={chartMoods} days={days} showLevelLabels />
               )}
             </CardBody>
           </Card>
@@ -197,6 +194,22 @@ export default function PacienteDetalhePage() {
       ) : null}
     </div>
   );
+}
+
+/**
+ * Descreve o período que o gráfico está de fato mostrando — não o filtro
+ * escolhido, mas a janela real, encurtada quando o paciente tem pouco
+ * histórico (ver getDisplayedWindow em MoodChart).
+ */
+function humorSubtitle(
+  days: 30 | 90,
+  rangeDays: number,
+  displayedWindow: DisplayedWindow | null,
+): string {
+  const base = displayedWindow?.shortened
+    ? `De ${shortDayMonth(displayedWindow.start)} a ${shortDayMonth(displayedWindow.end)}`
+    : `Últimos ${rangeDays} dias`;
+  return days === 90 ? `${base} — média semanal` : base;
 }
 
 /** Adapta o SummaryMood (resumo do paciente) pro shape que o MoodChart espera. */
