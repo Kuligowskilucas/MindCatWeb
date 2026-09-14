@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -10,23 +9,21 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { MoodChart, getDisplayedWindow, type DisplayedWindow } from '@/components/mood/MoodChart';
 import { usePatientSummary } from '@/hooks/usePatients';
 import { ApiError } from '@/lib/http';
-import { cn } from '@/lib/cn';
 import { shortDayMonth } from '@/lib/date';
 import { ChevronLeftIcon } from '@/components/icons';
 import { MOOD_META } from '@/lib/moodMeta';
 import type { MoodLevel, Mood } from '@/lib/types';
 
-const RANGE_OPTIONS = [30, 90] as const;
+const DAYS = 30;
 
 export default function PacienteDetalhePage() {
   const params = useParams<{ id: string }>();
   const patientId = Number(params.id);
-  const [days, setDays] = useState<30 | 90>(30);
-  const { data, isLoading, error } = usePatientSummary(patientId, days);
+  const { data, isLoading, error } = usePatientSummary(patientId, DAYS);
 
   const chartMoods = data ? toChartMoods(data.moods, data.patient.id) : [];
   const displayedWindow =
-    data && data.moods.length > 0 ? getDisplayedWindow(chartMoods, days) : null;
+    data && data.moods.length > 0 ? getDisplayedWindow(chartMoods, DAYS) : null;
 
   return (
     <div className="space-y-6">
@@ -46,40 +43,15 @@ export default function PacienteDetalhePage() {
         <SummaryError error={error} />
       ) : data ? (
         <>
-          <header className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold text-ink">{data.patient.name}</h1>
-              <p className="mt-1 text-sm text-ink-soft">Resumo clínico</p>
-            </div>
-
-            <div
-              role="group"
-              aria-label="Período do resumo"
-              className="flex gap-1 rounded-lg border border-line p-1"
-            >
-              {RANGE_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  aria-pressed={days === option}
-                  onClick={() => setDays(option)}
-                  className={cn(
-                    'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
-                    days === option
-                      ? 'bg-purple-400 text-white'
-                      : 'text-ink-soft hover:bg-purple-50',
-                  )}
-                >
-                  {option} dias
-                </button>
-              ))}
-            </div>
+          <header>
+            <h1 className="text-2xl font-semibold text-ink">{data.patient.name}</h1>
+            <p className="mt-1 text-sm text-ink-soft">Resumo clínico</p>
           </header>
 
           <Card>
             <CardHeader
               title="Humor no período"
-              description={humorSubtitle(days, data.range_days, displayedWindow)}
+              description={humorSubtitle(data.range_days, displayedWindow)}
             />
             <CardBody>
               {data.moods.length === 0 ? (
@@ -87,7 +59,7 @@ export default function PacienteDetalhePage() {
                   Sem registros de humor nesse período.
                 </p>
               ) : (
-                <MoodChart moods={chartMoods} days={days} showLevelLabels />
+                <MoodChart moods={chartMoods} days={DAYS} showLevelLabels />
               )}
             </CardBody>
           </Card>
@@ -201,15 +173,10 @@ export default function PacienteDetalhePage() {
  * escolhido, mas a janela real, encurtada quando o paciente tem pouco
  * histórico (ver getDisplayedWindow em MoodChart).
  */
-function humorSubtitle(
-  days: 30 | 90,
-  rangeDays: number,
-  displayedWindow: DisplayedWindow | null,
-): string {
-  const base = displayedWindow?.shortened
+function humorSubtitle(rangeDays: number, displayedWindow: DisplayedWindow | null): string {
+  return displayedWindow?.shortened
     ? `De ${shortDayMonth(displayedWindow.start)} a ${shortDayMonth(displayedWindow.end)}`
     : `Últimos ${rangeDays} dias`;
-  return days === 90 ? `${base} — variação semanal` : base;
 }
 
 /** Adapta o SummaryMood (resumo do paciente) pro shape que o MoodChart espera. */
