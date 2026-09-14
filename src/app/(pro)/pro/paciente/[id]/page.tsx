@@ -72,18 +72,13 @@ export default function PacienteDetalhePage() {
           </header>
 
           <Card>
-            <CardBody>
-              <p className="text-xs text-ink-faint">Exercícios concluídos</p>
-              <p className="mt-1 text-2xl font-semibold text-ink">
-                {data.exercises_completed}
-              </p>
-            </CardBody>
-          </Card>
-
-          <Card>
             <CardHeader
               title="Humor no período"
-              description={`Últimos ${data.range_days} dias`}
+              description={
+                days === 90
+                  ? `Últimos ${data.range_days} dias — média semanal`
+                  : `Últimos ${data.range_days} dias`
+              }
             />
             <CardBody>
               {data.moods.length === 0 ? (
@@ -91,7 +86,11 @@ export default function PacienteDetalhePage() {
                   Sem registros de humor nesse período.
                 </p>
               ) : (
-                <MoodChart moods={toChartMoods(data.moods, data.patient.id)} days={days} />
+                <MoodChart
+                  moods={toChartMoods(data.moods, data.patient.id)}
+                  days={days}
+                  showLevelLabels
+                />
               )}
             </CardBody>
           </Card>
@@ -111,10 +110,10 @@ export default function PacienteDetalhePage() {
                   {data.feelings_frequency.map((f) => (
                     <li
                       key={f.slug}
-                      className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm text-ink"
+                      className="flex items-center gap-1.5 rounded-full border border-purple-400 bg-purple-400 px-3.5 py-1.5 text-sm font-medium text-white"
                     >
                       <span>{f.label}</span>
-                      <span className="text-xs font-semibold text-ink-faint">{f.count}</span>
+                      <span className="text-xs font-semibold text-white/80">{f.count}</span>
                     </li>
                   ))}
                 </ul>
@@ -161,7 +160,7 @@ export default function PacienteDetalhePage() {
                             {m.feelings.map((feeling) => (
                               <span
                                 key={feeling.slug}
-                                className="rounded-full border border-line px-2.5 py-0.5 text-xs text-ink-soft"
+                                className="rounded-full border border-purple-400 bg-purple-400 px-3.5 py-1.5 text-sm font-medium text-white"
                               >
                                 {feeling.label}
                               </span>
@@ -177,6 +176,15 @@ export default function PacienteDetalhePage() {
                   })}
                 </ul>
               )}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardBody>
+              <p className="text-xs text-ink-faint">Exercícios concluídos</p>
+              <p className="mt-1 text-2xl font-semibold text-ink">
+                {data.exercises_completed}
+              </p>
             </CardBody>
           </Card>
 

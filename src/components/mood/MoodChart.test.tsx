@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { localDayKey } from '@/lib/date';
 import type { Mood } from '@/lib/types';
-import { MoodChart, buildRange } from './MoodChart';
+import { MoodChart, buildRange, buildWeeklyRange } from './MoodChart';
 
 function mood(daysAgo: number, level: Mood['mood_level']): Mood {
   const d = new Date();
@@ -54,5 +54,57 @@ describe('MoodChart', () => {
     const { container } = render(<MoodChart moods={moods} days={7} />);
 
     expect(container.querySelectorAll('path')).toHaveLength(1);
+  });
+
+  it('renderiza os cinco rótulos de nível quando showLevelLabels está ligado', () => {
+    const moods = [mood(0, 3)];
+
+    const { container } = render(<MoodChart moods={moods} days={30} showLevelLabels />);
+
+    expect(container.querySelectorAll('[data-level-label]')).toHaveLength(5);
+  });
+
+  it('não mostra rótulos de nível por padrão', () => {
+    const moods = [mood(0, 3)];
+
+    const { container } = render(<MoodChart moods={moods} days={30} />);
+
+    expect(container.querySelectorAll('[data-level-label]')).toHaveLength(0);
+  });
+});
+
+describe('buildWeeklyRange', () => {
+  it('agrega 90 dias em ~13 semanas, semana sem registro fica com level null', () => {
+    // Só os extremos têm registro: semana mais antiga e semana mais recente.
+    const moods = [mood(89, 2), mood(0, 5)];
+
+    const weeks = buildWeeklyRange(moods);
+
+    expect(weeks).toHaveLength(13);
+    expect(weeks[0].level).toBe(2);
+    expect(weeks[weeks.length - 1].level).toBe(5);
+    expect(weeks[6].level).toBeNull(); // semana no meio, sem nenhum registro
+  });
+
+  it('faz a média dos níveis registrados na semana', () => {
+    // dias 2 e 3 atrás caem na mesma semana (a mais recente).
+    const moods = [mood(2, 4), mood(3, 2)];
+
+    const weeks = buildWeeklyRange(moods);
+
+    expect(weeks[weeks.length - 1].level).toBe(3); // média de 4 e 2
+  });
+});
+
+describe('MoodChart com days=90 (janela semanal)', () => {
+  it('semana vazia no meio não gera segmento atravessando', () => {
+    // Semana 0 (mais antiga) e semana 1 são adjacentes; a semana com o
+    // registro de 60 dias atrás fica isolada, com semanas vazias antes dela.
+    const moods = [mood(89, 2), mood(82, 3), mood(60, 4)];
+
+    const { container } = render(<MoodChart moods={moods} days={90} />);
+
+    expect(container.querySelectorAll('path')).toHaveLength(1);
+    expect(container.querySelectorAll('circle')).toHaveLength(3);
   });
 });
