@@ -76,25 +76,46 @@ describe('MoodChart', () => {
 });
 
 describe('buildWeeklyRange', () => {
-  it('agrega 90 dias em ~13 semanas, semana sem registro fica com level null', () => {
-    // Só os extremos têm registro: semana mais antiga e semana mais recente.
+  it('agrega 90 dias em ~13 semanas', () => {
     const moods = [mood(89, 2), mood(0, 5)];
 
     const weeks = buildWeeklyRange(moods);
 
     expect(weeks).toHaveLength(13);
-    expect(weeks[0].level).toBe(2);
-    expect(weeks[weeks.length - 1].level).toBe(5);
-    expect(weeks[6].level).toBeNull(); // semana no meio, sem nenhum registro
   });
 
-  it('faz a média dos níveis registrados na semana', () => {
-    // dias 2 e 3 atrás caem na mesma semana (a mais recente).
-    const moods = [mood(2, 4), mood(3, 2)];
+  it('semana com variação vira faixa do mínimo ao máximo, com a mediana certa', () => {
+    // 3 registros na semana mais recente: 1, 5 e 3 — min 1, max 5, mediana 3.
+    const moods = [mood(4, 1), mood(2, 5), mood(0, 3)];
+
+    const weeks = buildWeeklyRange(moods);
+    const lastWeek = weeks[weeks.length - 1];
+
+    expect(lastWeek.min).toBe(1);
+    expect(lastWeek.max).toBe(5);
+    expect(lastWeek.median).toBe(3);
+  });
+
+  it('semana com um único registro não gera faixa: min, max e mediana coincidem', () => {
+    const moods = [mood(0, 4)];
+
+    const weeks = buildWeeklyRange(moods);
+    const lastWeek = weeks[weeks.length - 1];
+
+    expect(lastWeek.min).toBe(4);
+    expect(lastWeek.max).toBe(4);
+    expect(lastWeek.median).toBe(4);
+  });
+
+  it('semana sem nenhum registro fica com min, max e mediana null', () => {
+    // Só os extremos têm registro: semana mais antiga e semana mais recente.
+    const moods = [mood(89, 2), mood(0, 5)];
 
     const weeks = buildWeeklyRange(moods);
 
-    expect(weeks[weeks.length - 1].level).toBe(3); // média de 4 e 2
+    expect(weeks[6].min).toBeNull(); // semana no meio, sem nenhum registro
+    expect(weeks[6].max).toBeNull();
+    expect(weeks[6].median).toBeNull();
   });
 });
 
@@ -108,6 +129,36 @@ describe('MoodChart com days=90 (janela semanal)', () => {
 
     expect(container.querySelectorAll('path')).toHaveLength(1);
     expect(container.querySelectorAll('circle')).toHaveLength(3);
+  });
+
+  it('semana com variação desenha a faixa do mínimo ao máximo', () => {
+    // Mesma semana (a mais recente): níveis 1, 3 e 5 — tem variação.
+    const moods = [mood(4, 1), mood(2, 5), mood(0, 3)];
+
+    const { container } = render(<MoodChart moods={moods} days={90} />);
+
+    expect(container.querySelectorAll('[data-week-band]')).toHaveLength(1);
+    expect(container.querySelectorAll('circle')).toHaveLength(1); // só a mediana
+  });
+
+  it('semana com um único registro não desenha faixa, só o ponto', () => {
+    const moods = [mood(0, 4)];
+
+    const { container } = render(<MoodChart moods={moods} days={90} />);
+
+    expect(container.querySelectorAll('[data-week-band]')).toHaveLength(0);
+    expect(container.querySelectorAll('circle')).toHaveLength(1);
+  });
+
+  it('semana vazia não gera ponto nem segmento', () => {
+    // Semana mais antiga e outra isolada têm registro; as semanas entre elas
+    // ficam vazias e não podem virar ponto nem ligar via segmento.
+    const moods = [mood(89, 2), mood(60, 4)];
+
+    const { container } = render(<MoodChart moods={moods} days={90} />);
+
+    expect(container.querySelectorAll('circle')).toHaveLength(2);
+    expect(container.querySelectorAll('path')).toHaveLength(0);
   });
 });
 

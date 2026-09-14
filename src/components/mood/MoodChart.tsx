@@ -14,8 +14,8 @@ interface MoodChartProps {
 export interface MoodPoint {
   key: string;
   label: string;
-  /** Nível do dia, ou média semanal (fracionária) na janela de 90 dias. */
-  level: number | null;
+  /** Nível do dia — null quando não há registro naquele dia. */
+  level: MoodLevel | null;
 }
 
 interface DayEntry {
@@ -53,15 +53,15 @@ function buildDayEntries(moods: Mood[], days: number): DayEntry[] {
  * não pode ler "estável" onde só falta histórico. Sem registro nenhum,
  * devolve a lista inteira — não há de onde cortar.
  */
-function trimLeadingEmpty<T extends { level: number | null }>(items: T[]): T[] {
-  const firstDataIndex = items.findIndex((item) => item.level !== null);
+function trimLeadingEmpty<T>(items: T[], hasData: (item: T) => boolean): T[] {
+  const firstDataIndex = items.findIndex(hasData);
   if (firstDataIndex <= 0) return items;
   return items.slice(firstDataIndex);
 }
 
 /** Últimos `days` dias, do mais antigo com registro (ou o 1º dia, se não houver nenhum) ao hoje. */
 export function buildRange(moods: Mood[], days: 7 | 30 | 90): MoodPoint[] {
-  const entries = trimLeadingEmpty(buildDayEntries(moods, days));
+  const entries = trimLeadingEmpty(buildDayEntries(moods, days), (e) => e.level !== null);
   const count = entries.length;
   return entries.map((entry, index) => {
     const i = count - 1 - index;
@@ -80,7 +80,8 @@ const WEEK_SIZE = 7;
 
 interface WeekEntry {
   weekStart: Date;
-  level: number | null;
+  /** Níveis registrados na semana, em ordem crescente. */
+  levels: MoodLevel[];
 }
 
 function buildWeekEntries(moods: Mood[], days: number): WeekEntry[] {
@@ -90,25 +91,46 @@ function buildWeekEntries(moods: Mood[], days: number): WeekEntry[] {
     const chunk = entries.slice(start, start + WEEK_SIZE);
     const levels = chunk
       .map((e) => e.level)
-      .filter((l): l is MoodLevel => l !== null);
-    const avg = levels.length > 0 ? levels.reduce((a, b) => a + b, 0) / levels.length : null;
-    weeks.push({ weekStart: chunk[0].date, level: avg });
+      .filter((l): l is MoodLevel => l !== null)
+      .sort((a, b) => a - b);
+    weeks.push({ weekStart: chunk[0].date, levels });
   }
   return weeks;
 }
 
+function medianOf(sortedLevels: MoodLevel[]): number {
+  const mid = Math.floor(sortedLevels.length / 2);
+  return sortedLevels.length % 2 === 0
+    ? (sortedLevels[mid - 1] + sortedLevels[mid]) / 2
+    : sortedLevels[mid];
+}
+
+export interface WeeklyMoodPoint {
+  key: string;
+  label: string;
+  /** Menor, maior e mediana dos níveis da semana — null quando não há registro. */
+  min: number | null;
+  max: number | null;
+  median: number | null;
+}
+
 /**
- * 90 dias virando ~13 pontos: um por semana, com a média dos níveis
- * registrados nela. Semana sem nenhum registro fica com level null — mesma
- * regra de "sem dado, sem ponto" da visão diária, só que por semana. As
- * semanas sem registro no começo da janela são cortadas (ver trimLeadingEmpty).
+ * 90 dias virando ~13 pontos semanais. A média apaga oscilação (Bravo e
+ * Muito feliz na mesma semana viravam um ponto em Normal) — em vez dela,
+ * cada semana carrega a faixa min–max registrada, com a mediana marcando o
+ * ponto que a linha liga entre semanas adjacentes. Semana sem nenhum
+ * registro fica com tudo null — mesma regra de "sem dado, sem ponto" da
+ * visão diária, só que por semana. Semanas sem registro no começo da janela
+ * são cortadas (ver trimLeadingEmpty).
  */
-export function buildWeeklyRange(moods: Mood[], days = 90): MoodPoint[] {
-  const weeks = trimLeadingEmpty(buildWeekEntries(moods, days));
+export function buildWeeklyRange(moods: Mood[], days = 90): WeeklyMoodPoint[] {
+  const weeks = trimLeadingEmpty(buildWeekEntries(moods, days), (w) => w.levels.length > 0);
   return weeks.map((w) => ({
     key: localDayKey(w.weekStart),
     label: shortDayMonth(w.weekStart),
-    level: w.level,
+    min: w.levels.length > 0 ? w.levels[0] : null,
+    max: w.levels.length > 0 ? w.levels[w.levels.length - 1] : null,
+    median: w.levels.length > 0 ? medianOf(w.levels) : null,
   }));
 }
 
@@ -126,11 +148,11 @@ export function getDisplayedWindow(moods: Mood[], days: 7 | 30 | 90): DisplayedW
 
   if (days === 90) {
     const weeks = buildWeekEntries(moods, days);
-    const trimmed = trimLeadingEmpty(weeks);
+    const trimmed = trimLeadingEmpty(weeks, (w) => w.levels.length > 0);
     return { start: trimmed[0].weekStart, end, shortened: trimmed.length < weeks.length };
   }
 
-  const trimmed = trimLeadingEmpty(entries);
+  const trimmed = trimLeadingEmpty(entries, (e) => e.level !== null);
   return { start: trimmed[0].date, end, shortened: trimmed.length < entries.length };
 }
 
@@ -151,7 +173,7 @@ function xFor(index: number, count: number, leftPad: number, plotW: number): num
   return leftPad + (plotW / (count - 1)) * index;
 }
 
-/** Nível 1 embaixo, 5 em cima. Aceita fração (média semanal). */
+/** Nível 1 embaixo, 5 em cima. Aceita fração (mediana semanal). */
 function yFor(level: number): number {
   const plotH = H - PAD_TOP - PAD_BOTTOM;
   return PAD_TOP + plotH - ((level - 1) / 4) * plotH;
@@ -163,7 +185,9 @@ function clampLevel(level: number): MoodLevel {
 
 export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChartProps) {
   const isWeekly = days === 90;
-  const range = isWeekly ? buildWeeklyRange(moods, days) : buildRange(moods, days);
+  const dailyRange = isWeekly ? [] : buildRange(moods, days);
+  const weeklyRange = isWeekly ? buildWeeklyRange(moods, days) : [];
+  const range: { key: string; label: string }[] = isWeekly ? weeklyRange : dailyRange;
   const count = range.length;
 
   // Rótulos de nível ganham espaço próprio no viewBox — não sobrepõem o gráfico.
@@ -171,7 +195,7 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
   const W = widthFor(days) + (showLevelLabels ? LEVEL_LABEL_GUTTER : 0);
   const plotW = W - leftPad - PAD_X;
 
-  const points = range
+  const dayPoints = dailyRange
     .map((d, i) => {
       const level = d.level;
       if (level === null) return null;
@@ -179,19 +203,50 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
     })
     .filter((p): p is NonNullable<typeof p> => p !== null);
 
-  const hasData = points.length > 0;
+  // Cada semana vira uma faixa do nível mínimo ao máximo registrado, com a
+  // mediana marcando o ponto — a média apaga oscilação (Bravo e Muito feliz
+  // na mesma semana não podem virar um ponto só em Normal).
+  const weekMarks = weeklyRange
+    .map((w, i) => {
+      if (w.median === null || w.min === null || w.max === null) return null;
+      return {
+        key: w.key,
+        index: i,
+        x: xFor(i, count, leftPad, plotW),
+        medianY: yFor(w.median),
+        minY: yFor(w.min),
+        maxY: yFor(w.max),
+        median: w.median,
+        // Um único registro (ou vários iguais) não tem faixa pra desenhar.
+        hasBand: w.min !== w.max,
+      };
+    })
+    .filter((p): p is NonNullable<typeof p> => p !== null);
 
-  // Só liga pontos adjacentes (dias, ou semanas na janela de 90 dias): reta em
-  // cima de um período sem registro é dado inventado num gráfico que um
-  // profissional vai ler.
-  const segments: string[] = [];
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const curr = points[i];
+  const hasData = isWeekly ? weekMarks.length > 0 : dayPoints.length > 0;
+
+  // Só liga pontos/medianas adjacentes (dias, ou semanas na janela de 90
+  // dias): reta em cima de um período sem registro é dado inventado num
+  // gráfico que um profissional vai ler.
+  const daySegments: string[] = [];
+  for (let i = 1; i < dayPoints.length; i++) {
+    const prev = dayPoints[i - 1];
+    const curr = dayPoints[i];
     if (curr.index - prev.index === 1) {
-      segments.push(`M ${prev.x} ${prev.y} L ${curr.x} ${curr.y}`);
+      daySegments.push(`M ${prev.x} ${prev.y} L ${curr.x} ${curr.y}`);
     }
   }
+
+  const weekSegments: string[] = [];
+  for (let i = 1; i < weekMarks.length; i++) {
+    const prev = weekMarks[i - 1];
+    const curr = weekMarks[i];
+    if (curr.index - prev.index === 1) {
+      weekSegments.push(`M ${prev.x} ${prev.medianY} L ${curr.x} ${curr.medianY}`);
+    }
+  }
+
+  const segments = isWeekly ? weekSegments : daySegments;
 
   return (
     <div className="w-full">
@@ -201,7 +256,7 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
         role="img"
         aria-label={
           isWeekly
-            ? `Gráfico do seu humor nos últimos ${days} dias, média semanal`
+            ? `Gráfico do seu humor nos últimos ${days} dias, variação semanal`
             : `Gráfico do seu humor nos últimos ${days} dias`
         }
       >
@@ -237,7 +292,7 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
             </text>
           ))}
 
-        {/* Linha do humor */}
+        {/* Linha do humor — liga o nível do dia, ou a mediana da semana */}
         {segments.map((d, i) => (
           <path
             key={i}
@@ -249,18 +304,45 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
           />
         ))}
 
-        {/* Pontos */}
-        {points.map((p) => (
-          <circle
-            key={p.key}
-            cx={p.x}
-            cy={p.y}
-            r={5}
-            fill={MOOD_META[clampLevel(p.level)].tint}
-            stroke="var(--color-surface)"
-            strokeWidth={2}
-          />
-        ))}
+        {isWeekly
+          ? /* Faixa min–max da semana (quando há mais de um valor) + mediana */
+            weekMarks.map((w) => (
+              <g key={w.key}>
+                {w.hasBand && (
+                  <line
+                    data-week-band="true"
+                    x1={w.x}
+                    x2={w.x}
+                    y1={w.minY}
+                    y2={w.maxY}
+                    stroke={MOOD_META[clampLevel(w.median)].tint}
+                    strokeWidth={5}
+                    strokeLinecap="round"
+                    opacity={0.35}
+                  />
+                )}
+                <circle
+                  cx={w.x}
+                  cy={w.medianY}
+                  r={5}
+                  fill={MOOD_META[clampLevel(w.median)].tint}
+                  stroke="var(--color-surface)"
+                  strokeWidth={2}
+                />
+              </g>
+            ))
+          : /* Pontos */
+            dayPoints.map((p) => (
+              <circle
+                key={p.key}
+                cx={p.x}
+                cy={p.y}
+                r={5}
+                fill={MOOD_META[clampLevel(p.level)].tint}
+                stroke="var(--color-surface)"
+                strokeWidth={2}
+              />
+            ))}
 
         {/* Rótulos do eixo X (dias ou início de semana) */}
         {range.map(

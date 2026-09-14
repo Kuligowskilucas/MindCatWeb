@@ -209,7 +209,7 @@ function humorSubtitle(
   const base = displayedWindow?.shortened
     ? `De ${shortDayMonth(displayedWindow.start)} a ${shortDayMonth(displayedWindow.end)}`
     : `Últimos ${rangeDays} dias`;
-  return days === 90 ? `${base} — média semanal` : base;
+  return days === 90 ? `${base} — variação semanal` : base;
 }
 
 /** Adapta o SummaryMood (resumo do paciente) pro shape que o MoodChart espera. */
