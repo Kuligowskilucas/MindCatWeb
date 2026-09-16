@@ -149,14 +149,14 @@ export default function RegistroPage() {
             <RoleOption
               active={role === 'patient'}
               onClick={() => setRole('patient')}
-              emoji="🧑"
               label="Paciente"
+              description="Registro humor, diário e tarefas"
             />
             <RoleOption
               active={role === 'pro'}
               onClick={() => setRole('pro')}
-              emoji="👩‍⚕️"
               label="Terapeuta"
+              description="Acompanho pacientes. Exige validação do CRP"
             />
           </div>
           {role === 'pro' && (
@@ -253,13 +253,13 @@ export default function RegistroPage() {
 function RoleOption({
   active,
   onClick,
-  emoji,
   label,
+  description,
 }: {
   active: boolean;
   onClick: () => void;
-  emoji: string;
   label: string;
+  description: string;
 }) {
   return (
     <button
@@ -267,14 +267,14 @@ function RoleOption({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'flex flex-col items-center gap-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors',
+        'flex h-full flex-col items-start gap-0.5 rounded-lg border px-4 py-3 text-left transition-colors',
         active
           ? 'border-purple-400 bg-purple-50 text-purple-700'
-          : 'border-line bg-surface text-ink-soft hover:border-purple-200',
+          : 'border-line bg-surface text-ink hover:border-purple-200',
       )}
     >
-      <span aria-hidden className="text-xl">{emoji}</span>
-      {label}
+      <span className="font-medium">{label}</span>
+      <span className="text-sm text-ink-soft">{description}</span>
     </button>
   );
 }
