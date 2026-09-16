@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Fraunces } from 'next/font/google';
 import Image from 'next/image';
-
-
+import { Fraunces } from 'next/font/google';
+import { Card, CardBody, CardHeader } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { PasswordInput } from '@/components/ui/PasswordInput';
+import { MoodDemo } from '@/components/landing/MoodDemo';
+import { MoodChartPreview } from '@/components/landing/MoodChartPreview';
+import type { MoodLevel } from '@/lib/types';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -12,27 +16,37 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: 'MindCat — cuidado que continua entre uma sessão e outra',
+  title: 'MindCat — registro de humor, diário e tarefas do terapeuta',
   description:
-    'Acompanhe seu humor, guarde seu diário e siga as tarefas combinadas com seu terapeuta. Todos os dias, não só na consulta.',
+    'Marque como foi o dia em um toque, guarde seu diário com senha própria e acompanhe as tarefas combinadas na sessão.',
   openGraph: {
     title: 'MindCat',
-    description: 'Cuidado contínuo entre uma sessão e outra.',
+    description: 'Registro de humor, diário com senha própria e tarefas do terapeuta.',
     type: 'website',
     locale: 'pt_BR',
   },
 };
 
-
 const ctaPrimary =
-  'inline-flex h-12 items-center justify-center rounded-lg bg-purple-400 px-6 ' +
-  'text-base font-medium text-white transition-colors hover:bg-purple-500 active:bg-purple-600';
+  'inline-flex h-12 items-center justify-center rounded-lg bg-purple-600 px-6 ' +
+  'text-base font-medium text-white transition-colors hover:bg-purple-700 active:bg-purple-700';
 const ctaSecondary =
-  'inline-flex h-12 items-center justify-center rounded-lg border border-purple-200 bg-white px-6 ' +
+  'inline-flex h-12 items-center justify-center rounded-lg border border-purple-200 bg-surface px-6 ' +
   'text-base font-medium text-purple-600 transition-colors hover:bg-purple-50 active:bg-purple-100';
 
-type Mood = 1 | 2 | 3 | 4 | 5;
+const WEEK_LEVELS: (MoodLevel | null)[] = [3, 2, null, 3, 4, 4, 5];
 
+const MONTH_LEVELS: (MoodLevel | null)[] = [
+  2, 3, null, 3, 2, 2, 3, 4, 3, null,
+  3, 3, 4, 4, 3, 2, 3, 4, 4, 5,
+  4, 3, null, 3, 4, 4, 5, 4, 4, 5,
+];
+
+const FEELING_FREQUENCY = [
+  { label: 'Ansioso', count: 9 },
+  { label: 'Cansado', count: 7 },
+  { label: 'Calmo', count: 4 },
+];
 
 function Wordmark() {
   return (
@@ -43,94 +57,170 @@ function Wordmark() {
   );
 }
 
-function IconMood() {
+function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-      <path d="M5 8 L7 4 L10 7.5 Z" strokeLinejoin="round" />
-      <path d="M19 8 L17 4 L14 7.5 Z" strokeLinejoin="round" />
-      <circle cx="12" cy="14" r="7.5" />
-      <path d="M9.5 13.5 h.01 M14.5 13.5 h.01" strokeLinecap="round" />
-      <path d="M9.5 16.5 Q12 18.5 14.5 16.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IconDiary() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-      <rect x="5" y="3" width="14" height="18" rx="2" />
-      <path d="M9 3 v18" />
-      <path d="M12.5 11.5 a1.7 1.7 0 1 1 3 0 v1.2 h-3 Z" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-function IconTask() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-      <rect x="4" y="4" width="16" height="16" rx="3" />
-      <path d="M8.5 12 l2.3 2.3 L15.5 9.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{children}</h2>
   );
 }
 
-const PATIENT_FEATURES = [
-  {
-    icon: <IconMood />,
-    title: 'Seu humor em cinco gatos',
-    body: 'Marque como foi o dia com um toque, sem transformar sentimento em nota. As cores acompanham o clima e não punem os dias mais pesados.',
-  },
-  {
-    icon: <IconDiary />,
-    title: 'Um diário só seu',
-    body: 'Escreva o que quiser, protegido por uma senha própria, separada do login. Nem quem cuida de você entra sem permissão.',
-  },
-  {
-    icon: <IconTask />,
-    title: 'Tarefas que seguem com você',
-    body: 'O que foi combinado na sessão vira lembrete gentil ao longo da semana — e o cuidado não para na porta do consultório.',
-  },
-];
+/**
+ * Recriações da interface real, lado a lado com o texto que as explica.
+ * São figuras: `inert` + `aria-hidden` pra que um campo de senha que não
+ * destrava nada e um botão que não conclui nada fiquem fora do caminho de
+ * quem navega por teclado ou leitor de tela.
+ */
+function ScreenFigure({ children }: { children: React.ReactNode }) {
+  return (
+    <div inert aria-hidden="true" className="select-none">
+      {children}
+    </div>
+  );
+}
 
-const TRUST = [
-  {
-    title: 'Uma senha só pro diário',
-    body: 'O diário tem uma autenticação própria, separada do seu acesso à conta.',
-  },
-  {
-    title: 'Você decide quem acompanha',
-    body: 'O vínculo com um profissional só acontece com o seu consentimento.',
-  },
-  {
-    title: 'Seus dados, suas regras',
-    body: 'Você pode apagar sua conta e seus registros quando quiser.',
-  },
-];
+function MoodScreen() {
+  return (
+    <ScreenFigure>
+      <Card>
+        <CardHeader
+          title="Seu humor no período"
+          description="Os últimos 7 dias"
+          action={
+            <div className="flex gap-1 rounded-lg border border-line p-1">
+              <span className="rounded-md bg-purple-600 px-2.5 py-1 text-xs font-medium text-white">
+                7 dias
+              </span>
+              <span className="rounded-md px-2.5 py-1 text-xs font-medium text-ink-soft">
+                30 dias
+              </span>
+            </div>
+          }
+        />
+        <CardBody>
+          <MoodChartPreview levels={WEEK_LEVELS} days={7} />
+        </CardBody>
+      </Card>
+    </ScreenFigure>
+  );
+}
+
+function DiaryScreen() {
+  return (
+    <ScreenFigure>
+      <Card>
+        <CardHeader
+          title="Diário trancado"
+          description="Digite a senha do diário para ler e escrever."
+        />
+        <CardBody className="space-y-4">
+          <PasswordInput label="Senha do diário" readOnly defaultValue="" tabIndex={-1} />
+          <Button fullWidth>Destravar</Button>
+        </CardBody>
+      </Card>
+    </ScreenFigure>
+  );
+}
+
+function TasksScreen() {
+  return (
+    <ScreenFigure>
+      <div className="space-y-4">
+        <Card>
+          <CardHeader title="A fazer" description="2 pendentes" />
+          <CardBody className="space-y-3">
+            {['Anotar três situações que geraram ansiedade', 'Caminhar 20 minutos, três vezes na semana'].map(
+              (title) => (
+                <div
+                  key={title}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-canvas px-4 py-3"
+                >
+                  <span className="min-w-0 text-sm text-ink">{title}</span>
+                  <Button variant="secondary" size="sm" className="shrink-0">
+                    Marcar como feita
+                  </Button>
+                </div>
+              ),
+            )}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Concluídas" description="1 no total" />
+          <CardBody>
+            <div className="flex items-start justify-between gap-3 rounded-lg border border-line px-4 py-3">
+              <span className="min-w-0 text-sm text-ink-soft line-through">
+                Registrar o humor todo dia por uma semana
+              </span>
+              <span className="shrink-0 text-xs text-ink-soft">02 de setembro de 2026</span>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    </ScreenFigure>
+  );
+}
+
+function ClinicalSummaryScreen() {
+  return (
+    <ScreenFigure>
+      <Card>
+        <CardHeader title="Humor no período" description="Últimos 30 dias" />
+        <CardBody className="space-y-6">
+          <MoodChartPreview levels={MONTH_LEVELS} days={30} showLevelLabels />
+
+          <div>
+            <p className="mb-2 text-sm font-semibold text-ink">Sentimentos mais frequentes</p>
+            <ul className="flex flex-wrap gap-2">
+              {FEELING_FREQUENCY.map((feeling) => (
+                <li
+                  key={feeling.label}
+                  className="flex items-center gap-1.5 rounded-full border border-purple-600 bg-purple-600 px-3.5 py-1.5 text-sm font-medium text-white"
+                >
+                  <span>{feeling.label}</span>
+                  <span className="text-xs font-semibold text-white/80">{feeling.count}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm font-semibold text-ink">Registros recentes</p>
+            <div className="rounded-lg border border-line p-3">
+              <div className="flex items-center justify-between gap-3">
+                <span
+                  className="rounded-full px-2.5 py-1 text-xs font-medium text-ink"
+                  style={{
+                    backgroundColor: 'color-mix(in srgb, var(--color-mood-2) 18%, white)',
+                  }}
+                >
+                  Triste
+                </span>
+                <span className="text-xs text-ink-soft">14/09</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {['Cansado', 'Ansioso'].map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-purple-600 bg-purple-600 px-3.5 py-1.5 text-sm font-medium text-white"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-2 text-sm text-ink-soft">
+                “Semana pesada no trabalho, dormi mal.”
+              </p>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+    </ScreenFigure>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="relative overflow-hidden">
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            @media (prefers-reduced-motion: no-preference){
-              .rise{opacity:0;transform:translateY(12px);animation:mc-rise .7s cubic-bezier(.2,.7,.2,1) forwards}
-              .d1{animation-delay:.06s}.d2{animation-delay:.16s}.d3{animation-delay:.26s}.d4{animation-delay:.36s}
-            }
-            @keyframes mc-rise{to{opacity:1;transform:none}}
-          `,
-        }}
-      />
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[520px] w-[860px] -translate-x-1/2 rounded-full opacity-60 blur-3xl"
-        style={{
-          background:
-            'radial-gradient(closest-side, var(--color-purple-100), transparent 70%), radial-gradient(closest-side, var(--color-sky-100), transparent 75%)',
-        }}
-      />
-
-      {/* header */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+    <div>
+      <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
         <Wordmark />
         <nav className="flex items-center gap-2 sm:gap-3">
           <Link
@@ -141,149 +231,173 @@ export default function Home() {
           </Link>
           <Link
             href="/registro"
-            className="rounded-lg bg-purple-400 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+            className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700"
           >
             Criar conta
           </Link>
         </nav>
       </header>
 
-      {/* hero */}
-      <section className="mx-auto max-w-3xl px-6 pt-14 pb-8 text-center sm:pt-20">
-        <p className="rise d1 mx-auto mb-5 w-fit rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs font-medium text-ink-soft">
-          Cuidado contínuo em saúde mental
-        </p>
+      <section className="mx-auto max-w-5xl px-6 pt-10 pb-16 sm:pt-16">
         <h1
-          className={`rise d1 text-balance text-4xl leading-[1.1] tracking-tight text-ink sm:text-5xl ${fraunces.className}`}
+          className={`max-w-3xl text-balance text-4xl leading-[1.12] tracking-tight text-ink sm:text-5xl ${fraunces.className}`}
         >
-          O cuidado não precisa parar entre uma sessão e outra.
+          Um toque por dia vira o histórico que seu terapeuta lê.
         </h1>
-        <p className="rise d2 mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
-          O MindCat acompanha seu humor, guarda seu diário e organiza as tarefas
-          combinadas com seu terapeuta todos os dias, não só na consulta.
+        <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
+          Marque como foi o dia, escreva no diário e acompanhe as tarefas combinadas na
+          sessão. O registro leva dez segundos.
         </p>
-        <div className="rise d3 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link href="/registro" className={ctaPrimary}>
             Criar conta
           </Link>
           <Link href="#para-profissionais" className={ctaSecondary}>
             Sou terapeuta
           </Link>
+          <span className="text-sm text-ink-soft sm:ml-2">Grátis durante o lançamento.</span>
         </div>
-        <p className="rise d3 mt-3 text-sm text-ink-faint">Grátis durante o lançamento.</p>
 
-        {/* assinatura: a régua dos cinco gatos */}
-        <div className="rise d4 mt-14">
-          <div className="mx-auto grid max-w-md grid-cols-5 gap-2 sm:gap-3">
-            {([1, 2, 3, 4, 5] as Mood[]).map((m) => (
-              <div key={m} className="flex aspect-square items-center justify-center rounded-card bg-surface border border-line">
-                <Image src={`/humor/mood-${m}.png`} alt="" width={72} height={72} className="h-3/5 w-3/5 object-contain"/>
-              </div>
-            ))}
-          </div>
-          <p className="mx-auto mt-4 max-w-md text-sm text-ink-faint">
-            Registre como você está com um toque, sem notas de 0 a 10. Um dia
-            difícil não é um alarme vermelho.
-          </p>
+        <div className="mt-12">
+          <MoodDemo />
         </div>
       </section>
 
-      {/* features do paciente */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <div className="grid gap-5 md:grid-cols-3">
-          {PATIENT_FEATURES.map((f) => (
-            <div key={f.title} className="rounded-card border border-line bg-surface p-6 shadow-card">
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-500">
-                {f.icon}
-              </div>
-              <h3 className={`text-lg text-ink ${fraunces.className}`}>{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{f.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* seção profissional */}
-      <section id="para-profissionais" className="mx-auto max-w-6xl px-6 pb-20">
-        <div
-          className="overflow-hidden rounded-card border border-line p-8 sm:p-12"
-          style={{
-            background:
-              'linear-gradient(135deg, var(--color-purple-50), var(--color-sky-100))',
-          }}
-        >
-          <div className="max-w-2xl">
-            <p className="mb-3 text-sm font-medium text-purple-600">Para terapeutas</p>
-            <h2 className={`text-3xl leading-tight tracking-tight text-ink ${fraunces.className}`}>
-              Acompanhe seus pacientes entre as sessões.
-            </h2>
+      <section className="mx-auto max-w-5xl px-6 py-14">
+        <div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
+          <div>
+            <SectionTitle>Cinco gatos, um registro por dia</SectionTitle>
             <p className="mt-4 text-base leading-relaxed text-ink-soft">
-              Veja a evolução do humor ao longo do tempo, combine tarefas e
-              acompanhe um resumo clínico de cada paciente — sem invadir o
-              diário, que continua privado. O consultório ganha continuidade nos
-              dias entre uma consulta e outra.
+              Você escolhe o gato do dia, marca os sentimentos que apareceram e pode anotar
+              uma frase sobre o que pesou. Vale um registro por dia.
             </p>
-            <p className="mt-4 rounded-xl border border-purple-200/60 bg-white/60 p-4 text-sm text-ink-soft">
-              O acesso profissional passa por uma validação do seu registro
-              (CRP) antes de liberar os atendimentos. Você cria a conta, envia os
-              comprovantes e nossa equipe confirma o cadastro.
+            <p className="mt-3 text-base leading-relaxed text-ink-soft">
+              Na tela inicial esses registros viram gráfico de 7 ou 30 dias. A linha liga
+              apenas dias vizinhos que você registrou, então um dia em branco aparece como
+              um corte na linha.
             </p>
-            <div className="mt-7">
+          </div>
+          <MoodScreen />
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 py-14">
+        <div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
+          <div className="md:order-2">
+            <SectionTitle>O diário tem senha própria</SectionTitle>
+            <p className="mt-4 text-base leading-relaxed text-ink-soft">
+              A senha do diário é separada da senha da conta. Ela é pedida a cada leitura, a
+              cada anotação e a cada exclusão.
+            </p>
+            <p className="mt-3 text-base leading-relaxed text-ink-soft">
+              Ao sair da tela o diário tranca de novo, e o conteúdo sai da memória do
+              navegador. No banco, o texto fica cifrado.
+            </p>
+          </div>
+          <div className="md:order-1">
+            <DiaryScreen />
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 py-14">
+        <div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
+          <div>
+            <SectionTitle>As tarefas vêm do seu terapeuta</SectionTitle>
+            <p className="mt-4 text-base leading-relaxed text-ink-soft">
+              Seu terapeuta escreve a tarefa no app dele e ela aparece na sua lista, em “A
+              fazer”.
+            </p>
+            <p className="mt-3 text-base leading-relaxed text-ink-soft">
+              Quando terminar, você toca em “Marcar como feita” e ela passa para
+              “Concluídas”, com a data. O resumo que ele lê mostra quantas você concluiu.
+            </p>
+          </div>
+          <TasksScreen />
+        </div>
+      </section>
+
+      <section id="para-profissionais" className="mt-10 border-y border-line bg-purple-50">
+        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
+          <div className="max-w-2xl">
+            <h2
+              className={`text-3xl leading-tight tracking-tight text-ink sm:text-4xl ${fraunces.className}`}
+            >
+              O que você vê do seu paciente
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-ink-soft">
+              Com o consentimento do paciente, você vê o gráfico de humor dos últimos 30
+              dias, os sentimentos mais marcados, cada registro com a anotação que ele
+              escreveu e quantos exercícios foram concluídos. O diário não aparece pra você
+              em nenhuma tela. Se o paciente revogar o consentimento, o resumo deixa de
+              aparecer na hora.
+            </p>
+            <p className="mt-4 text-base leading-relaxed text-ink-soft">
+              O vínculo começa pelo paciente: ele gera um código no app dele e passa para
+              você, que adiciona em Pacientes.
+            </p>
+            <p className="mt-6 rounded-card border border-purple-200 bg-surface p-4 text-base leading-relaxed text-ink-soft">
+              O acesso profissional passa por uma validação do seu registro (CRP) antes de
+              liberar os atendimentos. Você cria a conta, envia os comprovantes e nossa
+              equipe confirma o cadastro.
+            </p>
+            <div className="mt-8">
               <Link href="/registro" className={ctaPrimary}>
                 Quero atender no MindCat
               </Link>
             </div>
           </div>
+
+          <div className="mt-12">
+            <ClinicalSummaryScreen />
+          </div>
         </div>
       </section>
 
-      {/* confiança / privacidade */}
-      <section className="mx-auto max-w-6xl px-6 pb-20">
-        <h2 className={`text-center text-2xl tracking-tight text-ink ${fraunces.className}`}>
-          Seus dados são seus.
-        </h2>
-        <div className="mx-auto mt-8 grid max-w-4xl gap-5 sm:grid-cols-3">
-          {TRUST.map((t) => (
-            <div key={t.title} className="text-center sm:text-left">
-              <h3 className="text-base font-semibold text-ink">{t.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{t.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA final */}
-      <section className="mx-auto max-w-3xl px-6 pb-24 text-center">
-        <h2 className={`text-3xl tracking-tight text-ink ${fraunces.className}`}>
-          Comece a cuidar hoje.
-        </h2>
-        <p className="mx-auto mt-3 max-w-md text-ink-soft">
-          Criar sua conta leva um minuto. O primeiro registro de humor pode ser
-          agora mesmo.
+      <section className="mx-auto max-w-2xl px-6 py-16 sm:py-20">
+        <SectionTitle>Privacidade, em termos concretos</SectionTitle>
+        <p className="mt-5 text-base leading-relaxed text-ink-soft">
+          O diário tem autenticação própria: uma senha separada da conta, exigida a cada
+          leitura e a cada anotação. Nenhuma tela do app mostra seu diário a terapeutas ou à
+          equipe.
         </p>
-        <div className="mt-7">
-          <Link href="/registro" className={ctaPrimary}>
-            Criar conta
+        <p className="mt-4 text-base leading-relaxed text-ink-soft">
+          O vínculo com um profissional depende do seu consentimento. Você gera o código de
+          convite, liga o compartilhamento no seu perfil e desliga quando quiser; a partir
+          daí o profissional perde o acesso ao seu resumo.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-ink-soft">
+          A exclusão da conta fica no seu perfil, atrás de uma confirmação digitada. Ao
+          confirmar, o diário e os registros de humor são apagados de vez; as tarefas ficam
+          guardadas como registro clínico, desligadas do seu nome.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-ink-soft">
+          O passo a passo de cada uma dessas coisas está na{' '}
+          <Link href="/ajuda" className="font-medium text-purple-600 underline underline-offset-2">
+            Ajuda
           </Link>
-        </div>
+          .
+        </p>
       </section>
 
-      {/* footer */}
       <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <Wordmark />
-          <p className="text-sm text-ink-faint">
-            Cuidado contínuo entre uma sessão e outra.
-          </p>
-          <nav className="flex items-center gap-4 text-sm">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
             <Link href="/login" className="text-ink-soft transition-colors hover:text-purple-600">
               Entrar
+            </Link>
+            <Link href="/registro" className="text-ink-soft transition-colors hover:text-purple-600">
+              Criar conta
             </Link>
             <Link href="/ajuda" className="text-ink-soft transition-colors hover:text-purple-600">
               Ajuda
             </Link>
-            <Link href="/registro" className="text-ink-soft transition-colors hover:text-purple-600">
-              Criar conta
+            <Link href="/privacidade" className="text-ink-soft transition-colors hover:text-purple-600">
+              Privacidade
+            </Link>
+            <Link href="/termos" className="text-ink-soft transition-colors hover:text-purple-600">
+              Termos
             </Link>
           </nav>
         </div>
