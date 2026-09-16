@@ -67,7 +67,7 @@ export function MoodScale({ value, onChange, disabled, size = 'lg' }: MoodScaleP
             <span
               className={cn(
                 'text-xs font-medium',
-                selected ? 'text-ink' : 'text-ink-faint',
+                selected ? 'text-ink' : 'text-ink-soft',
               )}
             >
               {meta.label}
