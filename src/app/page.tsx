@@ -3,10 +3,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Fraunces } from 'next/font/google';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { PasswordInput } from '@/components/ui/PasswordInput';
 import { MoodDemo } from '@/components/landing/MoodDemo';
 import { MoodChartPreview } from '@/components/landing/MoodChartPreview';
+import { CompletedTaskDate } from '@/components/landing/CompletedTaskDate';
 import type { MoodLevel } from '@/lib/types';
 
 const fraunces = Fraunces({
@@ -34,12 +33,27 @@ const ctaSecondary =
   'inline-flex h-12 items-center justify-center rounded-lg border border-purple-200 bg-surface px-6 ' +
   'text-base font-medium text-purple-600 transition-colors hover:bg-purple-50 active:bg-purple-100';
 
+/**
+ * As figuras abaixo imitam botões e campos do app com span e div. Um botão de
+ * verdade dentro de uma figura inerte só serviria pra confundir quem navega
+ * por teclado ou leitor de tela.
+ */
+const fakeButtonPrimary =
+  'flex h-11 w-full items-center justify-center rounded-lg bg-purple-600 px-5 text-sm font-medium text-white';
+const fakeButtonSecondary =
+  'flex h-9 shrink-0 items-center justify-center rounded-lg border border-purple-200 bg-surface px-3 text-sm font-medium text-purple-600';
+
 const WEEK_LEVELS: (MoodLevel | null)[] = [3, 2, null, 3, 4, 4, 5];
 
 const MONTH_LEVELS: (MoodLevel | null)[] = [
   2, 3, null, 3, 2, 2, 3, 4, 3, null,
   3, 3, 4, 4, 3, 2, 3, 4, 4, 5,
   4, 3, null, 3, 4, 4, 5, 4, 4, 5,
+];
+
+const PENDING_TASKS = [
+  'Anotar três situações que geraram ansiedade',
+  'Caminhar 20 minutos, três vezes na semana',
 ];
 
 const FEELING_FREQUENCY = [
@@ -63,12 +77,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * Recriações da interface real, lado a lado com o texto que as explica.
- * São figuras: `inert` + `aria-hidden` pra que um campo de senha que não
- * destrava nada e um botão que não conclui nada fiquem fora do caminho de
- * quem navega por teclado ou leitor de tela.
- */
 function ScreenFigure({ children }: { children: React.ReactNode }) {
   return (
     <div inert aria-hidden="true" className="select-none">
@@ -112,8 +120,13 @@ function DiaryScreen() {
           description="Digite a senha do diário para ler e escrever."
         />
         <CardBody className="space-y-4">
-          <PasswordInput label="Senha do diário" readOnly defaultValue="" tabIndex={-1} />
-          <Button fullWidth>Destravar</Button>
+          <div>
+            <span className="mb-1.5 block text-sm font-medium text-ink">Senha do diário</span>
+            <div className="flex h-11 items-center justify-end rounded-lg border border-line bg-surface px-3.5">
+              <span className="text-xs font-medium text-ink-soft">mostrar</span>
+            </div>
+          </div>
+          <span className={fakeButtonPrimary}>Destravar</span>
         </CardBody>
       </Card>
     </ScreenFigure>
@@ -127,19 +140,15 @@ function TasksScreen() {
         <Card>
           <CardHeader title="A fazer" description="2 pendentes" />
           <CardBody className="space-y-3">
-            {['Anotar três situações que geraram ansiedade', 'Caminhar 20 minutos, três vezes na semana'].map(
-              (title) => (
-                <div
-                  key={title}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-canvas px-4 py-3"
-                >
-                  <span className="min-w-0 text-sm text-ink">{title}</span>
-                  <Button variant="secondary" size="sm" className="shrink-0">
-                    Marcar como feita
-                  </Button>
-                </div>
-              ),
-            )}
+            {PENDING_TASKS.map((title) => (
+              <div
+                key={title}
+                className="flex items-center justify-between gap-3 rounded-lg border border-line bg-canvas px-4 py-3"
+              >
+                <span className="min-w-0 text-sm text-ink">{title}</span>
+                <span className={fakeButtonSecondary}>Marcar como feita</span>
+              </div>
+            ))}
           </CardBody>
         </Card>
 
@@ -150,7 +159,7 @@ function TasksScreen() {
               <span className="min-w-0 text-sm text-ink-soft line-through">
                 Registrar o humor todo dia por uma semana
               </span>
-              <span className="shrink-0 text-xs text-ink-soft">02 de setembro de 2026</span>
+              <CompletedTaskDate daysAgo={14} />
             </div>
           </CardBody>
         </Card>
@@ -246,7 +255,7 @@ export default function Home() {
         </h1>
         <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">
           Marque como foi o dia, escreva no diário e acompanhe as tarefas combinadas na
-          sessão. O registro leva dez segundos.
+          sessão.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link href="/registro" className={ctaPrimary}>
@@ -272,9 +281,8 @@ export default function Home() {
               uma frase sobre o que pesou. Vale um registro por dia.
             </p>
             <p className="mt-3 text-base leading-relaxed text-ink-soft">
-              Na tela inicial esses registros viram gráfico de 7 ou 30 dias. A linha liga
-              apenas dias vizinhos que você registrou, então um dia em branco aparece como
-              um corte na linha.
+              Na tela inicial esses registros viram gráfico de 7 ou 30 dias. Dia sem
+              registro fica em branco no gráfico.
             </p>
           </div>
           <MoodScreen />
@@ -320,6 +328,7 @@ export default function Home() {
       <section id="para-profissionais" className="mt-10 border-y border-line bg-purple-50">
         <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
           <div className="max-w-2xl">
+            <p className="mb-3 text-sm font-medium text-purple-600">Para terapeutas</p>
             <h2
               className={`text-3xl leading-tight tracking-tight text-ink sm:text-4xl ${fraunces.className}`}
             >
@@ -341,15 +350,16 @@ export default function Home() {
               liberar os atendimentos. Você cria a conta, envia os comprovantes e nossa
               equipe confirma o cadastro.
             </p>
-            <div className="mt-8">
-              <Link href="/registro" className={ctaPrimary}>
-                Quero atender no MindCat
-              </Link>
-            </div>
           </div>
 
           <div className="mt-12">
             <ClinicalSummaryScreen />
+          </div>
+
+          <div className="mt-10">
+            <Link href="/registro" className={ctaPrimary}>
+              Quero atender no MindCat
+            </Link>
           </div>
         </div>
       </section>
@@ -378,6 +388,11 @@ export default function Home() {
           </Link>
           .
         </p>
+        <div className="mt-8">
+          <Link href="/registro" className={ctaPrimary}>
+            Criar conta
+          </Link>
+        </div>
       </section>
 
       <footer className="border-t border-line">

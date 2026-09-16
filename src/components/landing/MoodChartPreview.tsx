@@ -1,7 +1,7 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
 import { MoodChart } from '@/components/mood/MoodChart';
+import { useHydrated } from './useHydrated';
 import type { Mood, MoodLevel } from '@/lib/types';
 
 interface MoodChartPreviewProps {
@@ -9,11 +9,6 @@ interface MoodChartPreviewProps {
   levels: (MoodLevel | null)[];
   days: 7 | 30;
   showLevelLabels?: boolean;
-}
-
-/** Nunca emite mudança: o valor só troca do snapshot do servidor pro do cliente. */
-function subscribeNever(): () => void {
-  return () => {};
 }
 
 function buildMoods(levels: (MoodLevel | null)[]): Mood[] {
@@ -41,15 +36,12 @@ function buildMoods(levels: (MoodLevel | null)[]): Mood[] {
 }
 
 export function MoodChartPreview({ levels, days, showLevelLabels }: MoodChartPreviewProps) {
-  // O MoodChart monta a janela a partir de new Date(). A landing é
-  // prerenderizada no build, então o HTML estático traria as datas do build e
-  // o cliente, as de hoje: hidratação divergente garantida. Desenha só no
-  // cliente, com a altura reservada pra não empurrar o layout.
-  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+  const hydrated = useHydrated();
 
+  // Altura reservada pelo aspect-ratio pra que o desenho tardio não empurre o layout.
   return (
     <div className={showLevelLabels ? 'aspect-[9/2]' : 'aspect-[2/1]'}>
-      {mounted && (
+      {hydrated && (
         <MoodChart moods={buildMoods(levels)} days={days} showLevelLabels={showLevelLabels} />
       )}
     </div>
