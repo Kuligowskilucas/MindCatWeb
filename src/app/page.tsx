@@ -378,11 +378,7 @@ export default function Home() {
         </p>
         <p className="mt-4 text-base leading-relaxed text-ink-soft">
           A exclusão da conta fica no seu perfil, atrás de uma confirmação digitada. Ao
-          confirmar, o diário e os registros de humor são apagados de vez; as tarefas ficam
-          guardadas como registro clínico, desligadas do seu nome.
-        </p>
-        <p className="mt-4 text-base leading-relaxed text-ink-soft">
-          O passo a passo de cada uma dessas coisas está na{' '}
+          confirmar, o diário e os registros de humor são apagados. O passo a passo está na{' '}
           <Link href="/ajuda" className="font-medium text-purple-600 underline underline-offset-2">
             Ajuda
           </Link>
