@@ -6,8 +6,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { MoodDemo } from '@/components/landing/MoodDemo';
 import { MoodChartPreview } from '@/components/landing/MoodChartPreview';
 import { CompletedTaskDate } from '@/components/landing/CompletedTaskDate';
-import { WhatsAppFab } from '@/components/landing/WhatsAppFab';
-import { InstagramIcon, WhatsAppIcon } from '@/components/icons';
+import { InstagramIcon, PhoneIcon } from '@/components/icons';
 import type { MoodLevel } from '@/lib/types';
 
 const fraunces = Fraunces({
@@ -411,7 +410,7 @@ export default function Home() {
             rel="noopener noreferrer"
             className={`${ctaSecondary} gap-2`}
           >
-            <InstagramIcon aria-hidden />
+            <InstagramIcon aria-hidden="true" />
             Instagram
           </a>
           <a
@@ -420,7 +419,7 @@ export default function Home() {
             rel="noopener noreferrer"
             className={`${ctaSecondary} gap-2`}
           >
-            <WhatsAppIcon aria-hidden />
+            <PhoneIcon aria-hidden="true" />
             WhatsApp
           </a>
         </div>
@@ -448,9 +447,6 @@ export default function Home() {
           </nav>
         </div>
       </footer>
-
-      {/* Montado aqui, não no layout do grupo (public): o flutuante é só da landing. */}
-      <WhatsAppFab href={WHATSAPP_URL} />
     </div>
   );
 }

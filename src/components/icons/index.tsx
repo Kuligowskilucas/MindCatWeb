@@ -101,11 +101,18 @@ export function InstagramIcon(props: IconProps) {
   );
 }
 
-export function WhatsAppIcon(props: IconProps) {
+/**
+ * Só o fone, sem o círculo do logo — em tamanho pequeno o fundo embolava com o
+ * glifo. Este é cheio, não traçado como os outros: o corpo é o anel entre dois
+ * quartos de círculo de centro 17.2 6.8 (raios 12 e 8.8) e as pontas são duas
+ * bolas. Fica com 15.2 de lado, centrado em 12 12 como os demais ícones.
+ */
+export function PhoneIcon(props: IconProps) {
   return (
-    <svg {...base} {...props}>
-      <path d="M20.5 11.6a8.5 8.5 0 0 1-12.4 7.5L3.5 20.5l1.4-4.6a8.5 8.5 0 1 1 15.6-4.3Z" />
-      <path d="M9 8.8c-.6 1.8.4 3.8 1.8 5.2 1.4 1.4 3.4 2.4 5.2 1.8l-.6-1.7-1.5.4a6 6 0 0 1-1.9-1.3 6 6 0 0 1-1.3-1.9l.4-1.5-1.7-.6Z" />
+    <svg {...base} fill="currentColor" stroke="none" {...props}>
+      <path d="M5.2 6.8A12 12 0 0 0 17.2 18.8L17.2 15.6A8.8 8.8 0 0 1 8.4 6.8Z" />
+      <circle cx="6.8" cy="6.8" r="2.4" />
+      <circle cx="17.2" cy="17.2" r="2.4" />
     </svg>
   );
 }

@@ -35,12 +35,4 @@ describe('Landing — Fale com a gente', () => {
 
     expect(screen.getByText('Fale com a gente')).toBeInTheDocument();
   });
-
-  it('não monta o flutuante antes da rolagem', () => {
-    render(<LandingPage />);
-
-    expect(
-      screen.queryByRole('link', { name: 'Conversar com o MindCat no WhatsApp' }),
-    ).not.toBeInTheDocument();
-  });
 });
