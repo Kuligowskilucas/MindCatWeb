@@ -12,7 +12,7 @@ export default function PrivacidadePage() {
       </Link>
 
       <h1 className="mt-4 text-2xl font-semibold text-ink">Política de Privacidade</h1>
-      <p className="mt-1 text-sm text-ink-faint">Versão 1.1 · Última atualização: 10 de setembro de 2026</p>
+      <p className="mt-1 text-sm text-ink-faint">Versão 1.2 · Última atualização: 23 de setembro de 2026</p>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-ink-soft">
         <section>
@@ -39,8 +39,9 @@ export default function PrivacidadePage() {
             <strong className="text-ink">Cadastro:</strong> nome, e-mail e senha
             (armazenada apenas de forma cifrada).{' '}
             <strong className="text-ink">Uso:</strong> preferências de perfil,
-            registros de humor (nível e descrição opcional), conteúdo do diário
-            (criptografado) e tarefas terapêuticas.{' '}
+            registros de humor (nível, sentimentos marcados, pensamento e
+            comportamento), conteúdo do diário (criptografado) e tarefas
+            terapêuticas.{' '}
             <strong className="text-ink">Profissionais:</strong> número e região
             do CRP, registro e-Psi e documentos enviados para validação.{' '}
             <strong className="text-ink">Técnicos:</strong> registros mínimos de
@@ -58,9 +59,10 @@ export default function PrivacidadePage() {
           <p className="mt-2">
             Tratamos os dados de cadastro para criar e proteger sua conta
             (execução de contrato). Os dados de saúde (humor, sentimentos
-            marcados, diário, tarefas) e o compartilhamento com o seu psicólogo
-            têm como base o seu consentimento específico e destacado
-            (art. 11, I), que você pode retirar a qualquer momento.
+            marcados, pensamento, comportamento, diário, tarefas) e o
+            compartilhamento com o seu psicólogo têm como base o seu
+            consentimento específico e destacado (art. 11, I), que você pode
+            retirar a qualquer momento. O seu diário nunca é compartilhado.
           </p>
         </section>
 
@@ -83,8 +85,9 @@ export default function PrivacidadePage() {
           </p>
           <p className="mt-2">
             Com o psicólogo, o compartilhamento se limita aos seus registros de
-            humor (o nível, os sentimentos marcados e a nota do registro) e ao
-            progresso das suas tarefas. O seu diário nunca é compartilhado.
+            humor (o nível, os sentimentos marcados, o pensamento e o
+            comportamento) e ao progresso das suas tarefas. O seu diário nunca é
+            compartilhado.
           </p>
         </section>
 
@@ -104,9 +107,10 @@ export default function PrivacidadePage() {
           <h2 className="text-base font-semibold text-ink">8. Por quanto tempo guardamos</h2>
           <p className="mt-2">
             Seus dados de conta e conteúdo enquanto a conta existir. Ao excluir a
-            conta, o diário e os registros de humor (com os sentimentos marcados
-            e as notas) são apagados definitivamente, a conta é anonimizada e os
-            documentos de credencial são removidos.
+            conta, o diário, os registros de humor (com os sentimentos marcados,
+            o pensamento e o comportamento) e as suas tarefas são apagados
+            definitivamente, a conta é anonimizada e os documentos de credencial
+            são removidos.
             Códigos temporários (2FA, recuperação de senha) expiram em minutos.
             Cópias de segurança são retidas por até 7 dias; registros técnicos,
             até 14 dias.

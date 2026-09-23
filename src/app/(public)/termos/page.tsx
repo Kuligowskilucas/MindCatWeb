@@ -12,7 +12,7 @@ export default function TermosPage() {
       </Link>
 
       <h1 className="mt-4 text-2xl font-semibold text-ink">Termos de Uso</h1>
-      <p className="mt-1 text-sm text-ink-faint">Versão 1.1 · Última atualização: 10 de setembro de 2026</p>
+      <p className="mt-1 text-sm text-ink-faint">Versão 1.2 · Última atualização: 23 de setembro de 2026</p>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-ink-soft">
         <section>

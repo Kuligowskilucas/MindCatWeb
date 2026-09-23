@@ -45,9 +45,9 @@ export function ConsentCard() {
               </p>
               <p className="mt-0.5 text-sm text-ink-soft">
                 Seu terapeuta vê seus registros de humor (o nível, os sentimentos
-                marcados e a nota do registro) e o progresso das suas tarefas.
-                Quando desligado, ele deixa de ver esses dados. Seu diário nunca
-                é compartilhado.
+                marcados, o pensamento e o comportamento) e o progresso das suas
+                tarefas. Quando desligado, ele deixa de ver esses dados. Seu
+                diário nunca é compartilhado.
               </p>
             </div>
 
