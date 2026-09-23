@@ -207,14 +207,19 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
   const points = plotPoints(range, leftPad, plotW);
   const hasData = points.length > 0;
 
-  // Liga registros consecutivos no tempo, inclusive dois do mesmo dia. Só não
-  // atravessa dia sem registro nenhum: reta em cima de dia vazio é dado
+  // Liga só o último registro de um dia ao primeiro do dia seguinte. Dois
+  // registros do mesmo dia dividem a coluna, então o segmento entre eles sairia
+  // quase vertical e passaria impressão de queda brusca onde são dois momentos
+  // do mesmo dia. Dia sem registro nenhum continua sem reta atravessando: dado
   // inventado num gráfico que um profissional vai ler.
+  //
+  // Os pontos estão em ordem cronológica, então a diferença de exatamente 1 dia
+  // entre vizinhos da lista é sempre a virada de um dia para o seguinte.
   const segments: string[] = [];
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
     const curr = points[i];
-    if (curr.dayIndex - prev.dayIndex <= 1) {
+    if (curr.dayIndex - prev.dayIndex === 1) {
       segments.push(`M ${prev.x} ${prev.y} L ${curr.x} ${curr.y}`);
     }
   }

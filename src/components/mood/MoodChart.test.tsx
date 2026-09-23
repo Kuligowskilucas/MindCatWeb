@@ -27,6 +27,22 @@ function cxOf(container: HTMLElement): number[] {
   );
 }
 
+function cyOf(container: HTMLElement): number[] {
+  return Array.from(container.querySelectorAll('circle')).map((c) =>
+    Number(c.getAttribute('cy')),
+  );
+}
+
+/** Pontas do segmento: "M x1 y1 L x2 y2" → { x1, y1, x2, y2 }. */
+function segmentEnds(path: Element) {
+  const [x1, y1, x2, y2] = (path.getAttribute('d') ?? '')
+    .replace(/[ML]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .map(Number);
+  return { x1, y1, x2, y2 };
+}
+
 describe('buildRange', () => {
   it('marca o dia sem registro como level null, mantendo os vizinhos', () => {
     // Registro no início da janela (6 dias atrás) evita que ela encurte —
@@ -95,25 +111,40 @@ describe('MoodChart', () => {
     expect(container.querySelectorAll('path')).toHaveLength(1);
   });
 
-  it('desenha um ponto por registro e um segmento entre dois registros do mesmo dia', () => {
+  it('desenha um ponto por registro e não liga dois registros do mesmo dia', () => {
     // Registro 6 dias atrás fixa a janela em 7 colunas; hoje tem dois registros.
-    // Os 5 dias no meio estão vazios, então só o par de hoje se liga.
+    // Os 5 dias no meio estão vazios e o par de hoje não se liga entre si.
     const moods = [mood(6, 3), mood(0, 2, 9), mood(0, 4, 19)];
 
     const { container } = render(<MoodChart moods={moods} days={7} />);
 
     expect(container.querySelectorAll('circle')).toHaveLength(3);
-    expect(container.querySelectorAll('path')).toHaveLength(1);
+    expect(container.querySelectorAll('path')).toHaveLength(0);
   });
 
-  it('liga a cadeia inteira quando o dia anterior tem registro', () => {
-    const moods = [mood(6, 3), mood(1, 2), mood(0, 4, 9), mood(0, 5, 19)];
+  it('liga um dia ao seguinte uma vez só, mesmo com vários registros nos dois', () => {
+    const moods = [mood(1, 2, 9), mood(1, 5, 19), mood(0, 1, 8), mood(0, 4, 20)];
 
     const { container } = render(<MoodChart moods={moods} days={7} />);
 
     expect(container.querySelectorAll('circle')).toHaveLength(4);
-    // ontem → 1º de hoje, e 1º de hoje → 2º de hoje.
-    expect(container.querySelectorAll('path')).toHaveLength(2);
+    expect(container.querySelectorAll('path')).toHaveLength(1);
+  });
+
+  it('o segmento entre dias sai do último registro do dia e chega no primeiro do seguinte', () => {
+    // Ontem: nível 2 às 9h e nível 5 às 19h. Hoje: nível 1 às 8h e nível 4 às 20h.
+    // A ligação tem que ser 5 → 1, não 2 → 1 nem 5 → 4.
+    const moods = [mood(1, 2, 9), mood(1, 5, 19), mood(0, 1, 8), mood(0, 4, 20)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+    const cys = cyOf(container);
+    const ultimoDeOntem = cys[1];
+    const primeiroDeHoje = cys[2];
+
+    const { y1, y2 } = segmentEnds(container.querySelector('path')!);
+
+    expect(y1).toBe(ultimoDeOntem);
+    expect(y2).toBe(primeiroDeHoje);
   });
 
   it('registros do mesmo dia em níveis diferentes dividem a mesma posição no eixo X', () => {
@@ -142,15 +173,14 @@ describe('MoodChart', () => {
     }
   });
 
-  it('não liga registros do mesmo dia por cima de um dia vazio entre colunas', () => {
+  it('não liga nada por cima de um dia vazio, nem dentro dos dias com registro', () => {
     // Dois registros 3 dias atrás, dois hoje; os dias do meio estão vazios.
     const moods = [mood(3, 2, 9), mood(3, 3, 18), mood(0, 4, 9), mood(0, 5, 18)];
 
     const { container } = render(<MoodChart moods={moods} days={7} />);
 
     expect(container.querySelectorAll('circle')).toHaveLength(4);
-    // Um segmento dentro de cada dia; nada atravessando o buraco de 2 dias.
-    expect(container.querySelectorAll('path')).toHaveLength(2);
+    expect(container.querySelectorAll('path')).toHaveLength(0);
   });
 
   it('renderiza os cinco rótulos de nível quando showLevelLabels está ligado', () => {
