@@ -42,7 +42,8 @@ export interface Mood {
   id: number;
   user_id: number;
   mood_level: MoodLevel;
-  mood_description: string | null;
+  thought: string;
+  behavior: string;
   recorded_at: string;
   created_at: string;
   updated_at: string;

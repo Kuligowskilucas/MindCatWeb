@@ -1,12 +1,15 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { moodsApi } from '@/lib/api/moods';
+import { moodsApi, type CreateMoodInput } from '@/lib/api/moods';
 import { ApiError } from '@/lib/http';
 import { isToday, localDayKey } from '@/lib/date';
-import type { MoodLevel } from '@/lib/types';
 
 const MOODS_KEY = ['moods'] as const;
+
+// Agora são vários registros por dia: per_page tem que caber a janela toda,
+// senão o dia de hoje volta cortado pela paginação.
+const PER_PAGE_PER_DAY = 10;
 
 /** [hoje - (days-1), hoje], no formato YYYY-MM-DD que a API espera. */
 function rangeFor(days: 7 | 30): { from: string; to: string } {
@@ -20,25 +23,25 @@ export function useMoods(days: 7 | 30 = 7) {
   const { from, to } = rangeFor(days);
   return useQuery({
     queryKey: [...MOODS_KEY, days] as const,
-    // Um registro por dia no máximo: per_page = days cobre a janela inteira sem paginar.
-    queryFn: () => moodsApi.list({ from, to, per_page: days }),
+    queryFn: () => moodsApi.list({ from, to, per_page: days * PER_PAGE_PER_DAY }),
     select: (page) => page.data,
   });
 }
 
-/** Já existe registro de humor para hoje? Sempre olha a janela de 7 dias. */
-export function useTodayMood() {
+/** Registros de hoje, do mais recente para o mais antigo. Olha a janela de 7 dias. */
+export function useTodayMoods() {
   const { data: moods, ...rest } = useMoods(7);
-  const today = moods?.find((m) => isToday(m.recorded_at)) ?? null;
-  return { todayMood: today, moods: moods ?? [], ...rest };
+  const today = (moods ?? [])
+    .filter((m) => isToday(m.recorded_at))
+    .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+  return { todayMoods: today, moods: moods ?? [], ...rest };
 }
 
 export function useCreateMood() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { mood_level: MoodLevel; mood_description?: string; feelings?: string[] }) =>
-      moodsApi.create(data),
+    mutationFn: (data: CreateMoodInput) => moodsApi.create(data),
     onSuccess: () => {
       // Janelas diferentes (7 e 30 dias) vivem em chaves diferentes —
       // invalida pelo prefixo pra recarregar todas, não sobrescreve uma fixa.
@@ -49,9 +52,8 @@ export function useCreateMood() {
 
 /** Traduz o erro da API em texto pro usuário. */
 export function moodErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    if (error.status === 409) return 'Você já registrou seu humor hoje.';
-    if (error.status === 422) return error.message;
+  if (error instanceof ApiError && error.status === 422) {
+    return error.message;
   }
   return 'Não foi possível registrar seu humor. Tente novamente.';
 }

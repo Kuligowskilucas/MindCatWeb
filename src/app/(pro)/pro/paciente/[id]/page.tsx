@@ -179,16 +179,21 @@ function humorSubtitle(rangeDays: number, displayedWindow: DisplayedWindow | nul
     : `Últimos ${rangeDays} dias`;
 }
 
-/** Adapta o SummaryMood (resumo do paciente) pro shape que o MoodChart espera. */
+/**
+ * Adapta o SummaryMood (resumo do paciente) pro shape que o MoodChart espera.
+ * O gráfico só lê mood_level e recorded_at; thought e behavior entram vazios
+ * só para satisfazer o tipo Mood.
+ */
 function toChartMoods(
-  moods: { id: number; mood_level: number; mood_description: string | null; recorded_at: string }[],
+  moods: { id: number; mood_level: number; recorded_at: string }[],
   userId: number,
 ): Mood[] {
   return moods.map((m) => ({
     id: m.id,
     user_id: userId,
     mood_level: m.mood_level as MoodLevel,
-    mood_description: m.mood_description,
+    thought: '',
+    behavior: '',
     recorded_at: m.recorded_at,
     created_at: m.recorded_at,
     updated_at: m.recorded_at,

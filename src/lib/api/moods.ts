@@ -1,6 +1,14 @@
 import { http } from '@/lib/http';
 import type { Mood, MoodLevel } from '@/lib/types';
 
+/** Os quatro campos são obrigatórios na API (StoreMoodRequest). */
+export interface CreateMoodInput {
+  mood_level: MoodLevel;
+  feelings: string[];
+  thought: string;
+  behavior: string;
+}
+
 /** GET /moods é paginado no Laravel. */
 export interface Paginated<T> {
   data: T[];
@@ -19,8 +27,7 @@ export const moodsApi = {
     return http.get<Paginated<Mood>>(`/moods${suffix}`);
   },
 
-  create: (data: { mood_level: MoodLevel; mood_description?: string; feelings?: string[] }) =>
-    http.post<Mood>('/moods', data),
+  create: (data: CreateMoodInput) => http.post<Mood>('/moods', data),
 
   remove: (id: number) => http.delete<{ message: string }>(`/moods/${id}`),
 };
