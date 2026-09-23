@@ -200,6 +200,79 @@ describe('MoodChart', () => {
   });
 });
 
+describe('MoodChart — faixas alternadas por dia', () => {
+  it('desenha uma faixa por dia em posição par na janela de 7 dias', () => {
+    const moods = [mood(6, 3), mood(0, 4)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+
+    // 7 colunas → índices 0, 2, 4 e 6.
+    expect(container.querySelectorAll('[data-day-band]')).toHaveLength(4);
+  });
+
+  it('desenha uma faixa por dia em posição par na janela de 30 dias', () => {
+    const moods = [mood(29, 3), mood(0, 4)];
+
+    const { container } = render(<MoodChart moods={moods} days={30} />);
+
+    expect(container.querySelectorAll('[data-day-band]')).toHaveLength(15);
+  });
+
+  it('acompanha a janela adaptativa em vez da janela pedida', () => {
+    // Só há registro nos últimos 5 dias de uma janela de 30: 5 colunas → 3 faixas.
+    const moods = [mood(4, 3), mood(0, 5)];
+
+    const { container } = render(<MoodChart moods={moods} days={30} />);
+
+    expect(container.querySelectorAll('[data-day-band]')).toHaveLength(3);
+  });
+
+  it('ocupa a altura útil do gráfico e a largura da coluna', () => {
+    const moods = [mood(6, 3), mood(0, 4)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+    const bands = Array.from(container.querySelectorAll('[data-day-band]'));
+    const columnGap = (320 - 24 * 2) / 6;
+
+    for (const band of bands) {
+      expect(Number(band.getAttribute('y'))).toBe(16);
+      expect(Number(band.getAttribute('height'))).toBe(160 - 16 - 28);
+    }
+
+    // A do meio tem a largura cheia da coluna; a primeira, meia (o centro dela
+    // é a borda do gráfico).
+    expect(Number(bands[1].getAttribute('width'))).toBeCloseTo(columnGap);
+    expect(Number(bands[0].getAttribute('width'))).toBeCloseTo(columnGap / 2);
+  });
+
+  it('não invade o espaço dos rótulos de nível', () => {
+    const moods = [mood(6, 3), mood(0, 4)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} showLevelLabels />);
+    const bands = Array.from(container.querySelectorAll('[data-day-band]'));
+    const leftPad = 24 + 80;
+
+    for (const band of bands) {
+      expect(Number(band.getAttribute('x'))).toBeGreaterThanOrEqual(leftPad);
+    }
+    expect(container.querySelectorAll('[data-level-label]')).toHaveLength(5);
+  });
+
+  it('fica atrás dos segmentos e dos pontos', () => {
+    const moods = [mood(1, 3), mood(0, 4)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+    const desenhados = Array.from(container.querySelectorAll('rect, path, circle'));
+    const ultimaFaixa = desenhados.findLastIndex((el) => el.hasAttribute('data-day-band'));
+    const primeiraMarca = desenhados.findIndex(
+      (el) => el.tagName === 'path' || el.tagName === 'circle',
+    );
+
+    expect(ultimaFaixa).toBeGreaterThanOrEqual(0);
+    expect(primeiraMarca).toBeGreaterThan(ultimaFaixa);
+  });
+});
+
 describe('buildRange — janela adaptativa', () => {
   it('encurta a janela quando o primeiro registro é mais recente que o início', () => {
     // Paciente novo: só há registro nos últimos 5 dias de uma janela de 30.

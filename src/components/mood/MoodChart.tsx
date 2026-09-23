@@ -112,6 +112,8 @@ const PAD_TOP = 16;
 const PAD_BOTTOM = 28;
 const LEVEL_LABEL_GUTTER = 80;
 const WIDTH_BY_DAYS: Record<7 | 30, number> = { 7: 320, 30: 640 };
+/** Altura útil: onde os cinco níveis vivem, entre os paddings. */
+const PLOT_H = H - PAD_TOP - PAD_BOTTOM;
 
 function widthFor(days: 7 | 30): number {
   return WIDTH_BY_DAYS[days];
@@ -124,8 +126,41 @@ function xFor(index: number, count: number, leftPad: number, plotW: number): num
 
 /** Nível 1 embaixo, 5 em cima. */
 function yFor(level: number): number {
-  const plotH = H - PAD_TOP - PAD_BOTTOM;
-  return PAD_TOP + plotH - ((level - 1) / 4) * plotH;
+  return PAD_TOP + PLOT_H - ((level - 1) / 4) * PLOT_H;
+}
+
+const DAY_BAND_OPACITY = 0.4;
+
+interface DayBand {
+  key: string;
+  x: number;
+  width: number;
+}
+
+/**
+ * Faixa de fundo dos dias em posição par. Com vários registros no mesmo dia não
+ * se vê onde uma coluna termina e a outra começa; a faixa dá essa fronteira.
+ * A largura é a da coluna, cortada na área útil — a primeira e a última ficam
+ * com meia largura porque o centro delas é a própria borda do gráfico, e passar
+ * disso invadiria o espaço dos rótulos de nível.
+ */
+function dayBands(range: MoodPoint[], leftPad: number, plotW: number): DayBand[] {
+  const count = range.length;
+  const plotRight = leftPad + plotW;
+  const half = count > 1 ? plotW / (count - 1) / 2 : plotW;
+  const bands: DayBand[] = [];
+
+  range.forEach((day, index) => {
+    if (index % 2 !== 0) return;
+
+    const center = xFor(index, count, leftPad, plotW);
+    const from = Math.max(leftPad, center - half);
+    const to = Math.min(plotRight, center + half);
+
+    bands.push({ key: day.key, x: from, width: to - from });
+  });
+
+  return bands;
 }
 
 // Dois registros do mesmo dia no mesmo nível cairiam no mesmo pixel: separa
@@ -232,6 +267,21 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
         role="img"
         aria-label={`Gráfico do seu humor nos últimos ${days} dias`}
       >
+        {/* Faixa alternada por dia, antes de tudo pra ficar atrás das
+            linhas-guia, dos segmentos e dos pontos. */}
+        {dayBands(range, leftPad, plotW).map((band) => (
+          <rect
+            key={band.key}
+            data-day-band="true"
+            x={band.x}
+            y={PAD_TOP}
+            width={band.width}
+            height={PLOT_H}
+            fill="var(--color-line)"
+            opacity={DAY_BAND_OPACITY}
+          />
+        ))}
+
         {/* Linhas-guia horizontais (níveis 1 a 5) */}
         {MOOD_LEVELS.map((lvl) => (
           <line
