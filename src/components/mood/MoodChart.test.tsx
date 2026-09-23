@@ -4,11 +4,13 @@ import { localDayKey } from '@/lib/date';
 import type { Mood } from '@/lib/types';
 import { MoodChart, buildRange, getDisplayedWindow } from './MoodChart';
 
-function mood(daysAgo: number, level: Mood['mood_level']): Mood {
+/** `hour` separa dois registros do mesmo dia — e mantém o id único. */
+function mood(daysAgo: number, level: Mood['mood_level'], hour = 12): Mood {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
+  d.setHours(hour, 0, 0, 0);
   return {
-    id: daysAgo,
+    id: daysAgo * 100 + hour,
     user_id: 1,
     mood_level: level,
     thought: 'pensamento',
@@ -17,6 +19,12 @@ function mood(daysAgo: number, level: Mood['mood_level']): Mood {
     created_at: d.toISOString(),
     updated_at: d.toISOString(),
   };
+}
+
+function cxOf(container: HTMLElement): number[] {
+  return Array.from(container.querySelectorAll('circle')).map((c) =>
+    Number(c.getAttribute('cx')),
+  );
 }
 
 describe('buildRange', () => {
@@ -32,6 +40,34 @@ describe('buildRange', () => {
     expect(range[5].level).toBe(4); // 1 dia atrás
     expect(range[4].level).toBeNull(); // 2 dias atrás — o buraco
     expect(range[4].key).toBe(localDayKey(new Date(new Date().setDate(new Date().getDate() - 2))));
+  });
+});
+
+describe('buildRange — vários registros no mesmo dia', () => {
+  it('guarda todos os registros do dia em ordem cronológica', () => {
+    const moods = [mood(0, 5, 20), mood(0, 2, 8), mood(0, 4, 14)];
+
+    const range = buildRange(moods, 7);
+    const today = range[range.length - 1];
+
+    expect(today.entries.map((e) => e.level)).toEqual([2, 4, 5]);
+  });
+
+  it('usa o registro mais recente do dia como level do dia', () => {
+    const moods = [mood(0, 2, 8), mood(0, 5, 20)];
+
+    const range = buildRange(moods, 7);
+
+    expect(range[range.length - 1].level).toBe(5);
+  });
+
+  it('dia sem registro fica com entries vazio', () => {
+    const moods = [mood(6, 3), mood(0, 4)];
+
+    const range = buildRange(moods, 7);
+
+    expect(range[3].entries).toEqual([]);
+    expect(range[3].level).toBeNull();
   });
 });
 
@@ -57,6 +93,64 @@ describe('MoodChart', () => {
     const { container } = render(<MoodChart moods={moods} days={7} />);
 
     expect(container.querySelectorAll('path')).toHaveLength(1);
+  });
+
+  it('desenha um ponto por registro e um segmento entre dois registros do mesmo dia', () => {
+    // Registro 6 dias atrás fixa a janela em 7 colunas; hoje tem dois registros.
+    // Os 5 dias no meio estão vazios, então só o par de hoje se liga.
+    const moods = [mood(6, 3), mood(0, 2, 9), mood(0, 4, 19)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+
+    expect(container.querySelectorAll('circle')).toHaveLength(3);
+    expect(container.querySelectorAll('path')).toHaveLength(1);
+  });
+
+  it('liga a cadeia inteira quando o dia anterior tem registro', () => {
+    const moods = [mood(6, 3), mood(1, 2), mood(0, 4, 9), mood(0, 5, 19)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+
+    expect(container.querySelectorAll('circle')).toHaveLength(4);
+    // ontem → 1º de hoje, e 1º de hoje → 2º de hoje.
+    expect(container.querySelectorAll('path')).toHaveLength(2);
+  });
+
+  it('registros do mesmo dia em níveis diferentes dividem a mesma posição no eixo X', () => {
+    const moods = [mood(6, 3), mood(0, 2, 9), mood(0, 4, 19)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+    const [, segundo, terceiro] = cxOf(container);
+
+    expect(segundo).toBe(terceiro);
+  });
+
+  it('separa dois registros do mesmo dia no mesmo nível sem invadir a coluna vizinha', () => {
+    const moods = [mood(6, 3), mood(0, 4, 9), mood(0, 4, 19)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+    const [, primeiro, segundo] = cxOf(container);
+
+    expect(primeiro).not.toBe(segundo);
+
+    // A coluna de hoje é a última de 7. Os dois pontos ficam dentro da metade
+    // da coluna, ou seja, antes da fronteira com a coluna vizinha.
+    const columnGap = (320 - 24 * 2) / 6;
+    const centro = 24 + columnGap * 6;
+    for (const x of [primeiro, segundo]) {
+      expect(Math.abs(x - centro)).toBeLessThan(columnGap / 2);
+    }
+  });
+
+  it('não liga registros do mesmo dia por cima de um dia vazio entre colunas', () => {
+    // Dois registros 3 dias atrás, dois hoje; os dias do meio estão vazios.
+    const moods = [mood(3, 2, 9), mood(3, 3, 18), mood(0, 4, 9), mood(0, 5, 18)];
+
+    const { container } = render(<MoodChart moods={moods} days={7} />);
+
+    expect(container.querySelectorAll('circle')).toHaveLength(4);
+    // Um segmento dentro de cada dia; nada atravessando o buraco de 2 dias.
+    expect(container.querySelectorAll('path')).toHaveLength(2);
   });
 
   it('renderiza os cinco rótulos de nível quando showLevelLabels está ligado', () => {

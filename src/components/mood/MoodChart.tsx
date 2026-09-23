@@ -11,50 +11,64 @@ interface MoodChartProps {
   showLevelLabels?: boolean;
 }
 
+/** Um registro de humor dentro do dia. */
+export interface MoodEntry {
+  id: number;
+  level: MoodLevel;
+  recordedAt: string;
+}
+
 export interface MoodPoint {
   key: string;
   label: string;
-  /** Nível do dia — null quando não há registro naquele dia. */
+  /** Nível do registro mais recente do dia — null quando não há registro. */
   level: MoodLevel | null;
+  /** Todos os registros do dia, em ordem cronológica. */
+  entries: MoodEntry[];
 }
 
 interface DayEntry {
   date: Date;
-  level: MoodLevel | null;
+  entries: MoodEntry[];
 }
 
-function indexMoodsByDay(moods: Mood[]): Map<string, Mood> {
-  // Índice rápido: dia → humor (o mais recente do dia, se houver vários).
-  const byDay = new Map<string, Mood>();
+function groupMoodsByDay(moods: Mood[]): Map<string, MoodEntry[]> {
+  // Vários registros por dia: o dia guarda a lista inteira, não só um humor.
+  const byDay = new Map<string, MoodEntry[]>();
   for (const m of moods) {
     const key = localDayKey(m.recorded_at);
-    const existing = byDay.get(key);
-    if (!existing || new Date(m.recorded_at) > new Date(existing.recorded_at)) {
-      byDay.set(key, m);
-    }
+    const list = byDay.get(key) ?? [];
+    list.push({ id: m.id, level: m.mood_level as MoodLevel, recordedAt: m.recorded_at });
+    byDay.set(key, list);
+  }
+  for (const list of byDay.values()) {
+    // Empate no horário cai no id pra ordem não variar entre renders.
+    list.sort((a, b) => {
+      const diff = new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime();
+      return diff !== 0 ? diff : a.id - b.id;
+    });
   }
   return byDay;
 }
 
 function buildDayEntries(moods: Mood[], days: number): DayEntry[] {
-  const byDay = indexMoodsByDay(moods);
+  const byDay = groupMoodsByDay(moods);
   const entries: DayEntry[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const mood = byDay.get(localDayKey(d));
-    entries.push({ date: d, level: mood ? (mood.mood_level as MoodLevel) : null });
+    entries.push({ date: d, entries: byDay.get(localDayKey(d)) ?? [] });
   }
   return entries;
 }
 
 /**
- * Corta o começo da janela até o primeiro item com registro: paciente novo
+ * Corta o começo da janela até o primeiro dia com registro: paciente novo
  * não pode ler "estável" onde só falta histórico. Sem registro nenhum,
  * devolve a lista inteira — não há de onde cortar.
  */
-function trimLeadingEmpty<T extends { level: MoodLevel | null }>(items: T[]): T[] {
-  const firstDataIndex = items.findIndex((item) => item.level !== null);
+function trimLeadingEmpty<T extends { entries: MoodEntry[] }>(items: T[]): T[] {
+  const firstDataIndex = items.findIndex((item) => item.entries.length > 0);
   if (firstDataIndex <= 0) return items;
   return items.slice(firstDataIndex);
 }
@@ -70,7 +84,8 @@ export function buildRange(moods: Mood[], days: 7 | 30): MoodPoint[] {
     return {
       key: localDayKey(entry.date),
       label: days === 7 ? weekdayShort(entry.date) : showLabel ? shortDayMonth(entry.date) : '',
-      level: entry.level,
+      level: entry.entries.length > 0 ? entry.entries[entry.entries.length - 1].level : null,
+      entries: entry.entries,
     };
   });
 }
@@ -113,6 +128,73 @@ function yFor(level: number): number {
   return PAD_TOP + plotH - ((level - 1) / 4) * plotH;
 }
 
+// Dois registros do mesmo dia no mesmo nível cairiam no mesmo pixel: separa
+// horizontalmente dentro da coluna do dia. DOT_STEP é o diâmetro do ponto + 1
+// (encostam sem cobrir um ao outro) e COLUMN_SPREAD limita o espalhamento a
+// 30% da coluna pra cada lado, então nunca invade a coluna vizinha.
+const DOT_R = 5;
+const DOT_STEP = DOT_R * 2 + 1;
+const COLUMN_SPREAD = 0.6;
+
+/**
+ * Deslocamento em x de cada registro do dia, na mesma ordem da lista.
+ * Quem não divide o nível com ninguém fica no centro da coluna (offset 0).
+ */
+function offsetsWithinDay(entries: MoodEntry[], columnGap: number): number[] {
+  const offsets = entries.map(() => 0);
+  const budget = columnGap * COLUMN_SPREAD;
+
+  const indexesByLevel = new Map<MoodLevel, number[]>();
+  entries.forEach((entry, index) => {
+    const list = indexesByLevel.get(entry.level) ?? [];
+    list.push(index);
+    indexesByLevel.set(entry.level, list);
+  });
+
+  for (const indexes of indexesByLevel.values()) {
+    if (indexes.length < 2) continue;
+    const step = Math.min(DOT_STEP, budget / (indexes.length - 1));
+    indexes.forEach((entryIndex, position) => {
+      offsets[entryIndex] = (position - (indexes.length - 1) / 2) * step;
+    });
+  }
+
+  return offsets;
+}
+
+interface PlottedPoint {
+  id: number;
+  /** Índice do dia no eixo X — é por ele que a linha decide se liga. */
+  dayIndex: number;
+  level: MoodLevel;
+  x: number;
+  y: number;
+}
+
+/** Um ponto por registro, em ordem cronológica; registros do mesmo dia dividem a coluna. */
+function plotPoints(range: MoodPoint[], leftPad: number, plotW: number): PlottedPoint[] {
+  const count = range.length;
+  const columnGap = count > 1 ? plotW / (count - 1) : plotW;
+  const plotted: PlottedPoint[] = [];
+
+  range.forEach((day, dayIndex) => {
+    const cx = xFor(dayIndex, count, leftPad, plotW);
+    const offsets = offsetsWithinDay(day.entries, columnGap);
+
+    day.entries.forEach((entry, index) => {
+      plotted.push({
+        id: entry.id,
+        dayIndex,
+        level: entry.level,
+        x: cx + offsets[index],
+        y: yFor(entry.level),
+      });
+    });
+  });
+
+  return plotted;
+}
+
 export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChartProps) {
   const range = buildRange(moods, days);
   const count = range.length;
@@ -122,23 +204,17 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
   const W = widthFor(days) + (showLevelLabels ? LEVEL_LABEL_GUTTER : 0);
   const plotW = W - leftPad - PAD_X;
 
-  const points = range
-    .map((d, i) => {
-      const level = d.level;
-      if (level === null) return null;
-      return { ...d, level, index: i, x: xFor(i, count, leftPad, plotW), y: yFor(level) };
-    })
-    .filter((p): p is NonNullable<typeof p> => p !== null);
-
+  const points = plotPoints(range, leftPad, plotW);
   const hasData = points.length > 0;
 
-  // Só liga pontos adjacentes: reta em cima de um dia sem registro é dado
+  // Liga registros consecutivos no tempo, inclusive dois do mesmo dia. Só não
+  // atravessa dia sem registro nenhum: reta em cima de dia vazio é dado
   // inventado num gráfico que um profissional vai ler.
   const segments: string[] = [];
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
     const curr = points[i];
-    if (curr.index - prev.index === 1) {
+    if (curr.dayIndex - prev.dayIndex <= 1) {
       segments.push(`M ${prev.x} ${prev.y} L ${curr.x} ${curr.y}`);
     }
   }
@@ -198,10 +274,10 @@ export function MoodChart({ moods, days = 7, showLevelLabels = false }: MoodChar
         {/* Pontos */}
         {points.map((p) => (
           <circle
-            key={p.key}
+            key={p.id}
             cx={p.x}
             cy={p.y}
-            r={5}
+            r={DOT_R}
             fill={MOOD_META[p.level].tint}
             stroke="var(--color-surface)"
             strokeWidth={2}
