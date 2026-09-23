@@ -49,9 +49,8 @@ export function DangerZone() {
         />
         <CardBody className="space-y-4">
           <p className="text-sm text-ink-soft">
-            Seu diário e seus registros de humor são apagados para sempre. Suas
-            tarefas são mantidas como registro clínico, sem vínculo com seus
-            dados pessoais, e sua conta é anonimizada e desativada. Não dá para
+            Seu diário, seus registros de humor e suas tarefas são apagados
+            para sempre. Sua conta é anonimizada e desativada. Não dá para
             desfazer.
           </p>
           <div className="flex justify-end">
