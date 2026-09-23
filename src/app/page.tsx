@@ -6,7 +6,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { MoodDemo } from '@/components/landing/MoodDemo';
 import { MoodChartPreview } from '@/components/landing/MoodChartPreview';
 import { CompletedTaskDate } from '@/components/landing/CompletedTaskDate';
-import { InstagramIcon, PhoneIcon } from '@/components/icons';
+import { InstagramIcon, WhatsAppIcon } from '@/components/icons';
 import type { MoodLevel } from '@/lib/types';
 
 const fraunces = Fraunces({
@@ -419,7 +419,7 @@ export default function Home() {
             rel="noopener noreferrer"
             className={`${ctaSecondary} gap-2`}
           >
-            <PhoneIcon aria-hidden="true" />
+            <WhatsAppIcon aria-hidden="true" />
             WhatsApp
           </a>
         </div>
