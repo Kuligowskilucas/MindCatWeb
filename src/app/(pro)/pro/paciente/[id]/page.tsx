@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MoodChart, getDisplayedWindow, type DisplayedWindow } from '@/components/mood/MoodChart';
+import { MoodTexts } from '@/components/mood/MoodTexts';
 import { usePatientSummary } from '@/hooks/usePatients';
 import { ApiError } from '@/lib/http';
-import { shortDayMonth } from '@/lib/date';
+import { shortDayMonth, timeOfDay } from '@/lib/date';
+import { groupByDayDesc } from '@/lib/moodGroups';
 import { ChevronLeftIcon } from '@/components/icons';
 import { MOOD_META } from '@/lib/moodMeta';
 import type { MoodLevel, Mood } from '@/lib/types';
@@ -101,49 +103,64 @@ export default function PacienteDetalhePage() {
                   Sem registros de humor nesse período.
                 </p>
               ) : (
-                <ul className="space-y-3">
-                  {data.moods.map((m) => {
-                    const meta = MOOD_META[m.mood_level as MoodLevel];
-                    return (
-                      <li key={m.id} className="rounded-lg border border-line p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <span
-                            className="rounded-full px-2.5 py-1 text-xs font-medium text-ink"
-                            // Tom suave do humor como fundo — mesma escala não-alarmante
-                            // do app (nível 1 não é vermelho de erro, eufórico não é "bom").
-                            style={{
-                              backgroundColor: meta
-                                ? `color-mix(in srgb, ${meta.tint} 18%, white)`
-                                : undefined,
-                            }}
-                          >
-                            {meta?.label ?? m.mood_level}
+                <div className="space-y-5">
+                  {groupByDayDesc(data.moods).map((day) => (
+                    <section key={day.key}>
+                      <h3 className="mb-2 text-xs font-semibold text-ink-soft">
+                        {shortDayMonth(day.date)}
+                        {day.items.length > 1 && (
+                          <span className="ml-2 font-normal text-ink-faint">
+                            {day.items.length} registros
                           </span>
-                          <span className="text-xs text-ink-faint">
-                            {formatDay(m.recorded_at)}
-                          </span>
-                        </div>
-
-                        {m.feelings && m.feelings.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {m.feelings.map((feeling) => (
-                              <span
-                                key={feeling.slug}
-                                className="rounded-full border border-purple-400 bg-purple-400 px-3.5 py-1.5 text-sm font-medium text-white"
-                              >
-                                {feeling.label}
-                              </span>
-                            ))}
-                          </div>
                         )}
+                      </h3>
 
-                        {m.mood_description && (
-                          <p className="mt-2 text-sm text-ink-soft">“{m.mood_description}”</p>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+                      <ul className="space-y-3">
+                        {day.items.map((m) => {
+                          const meta = MOOD_META[m.mood_level as MoodLevel];
+                          return (
+                            <li key={m.id} className="rounded-lg border border-line p-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <span
+                                  className="rounded-full px-2.5 py-1 text-xs font-medium text-ink"
+                                  // Tom suave do humor como fundo — mesma escala não-alarmante
+                                  // do app (nível 1 não é vermelho de erro, eufórico não é "bom").
+                                  style={{
+                                    backgroundColor: meta
+                                      ? `color-mix(in srgb, ${meta.tint} 18%, white)`
+                                      : undefined,
+                                  }}
+                                >
+                                  {meta?.label ?? m.mood_level}
+                                </span>
+                                <span className="text-xs text-ink-faint">
+                                  <time dateTime={m.recorded_at}>
+                                    {shortDayMonth(m.recorded_at)} às {timeOfDay(m.recorded_at)}
+                                  </time>
+                                </span>
+                              </div>
+
+                              {m.feelings && m.feelings.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {m.feelings.map((feeling) => (
+                                    <span
+                                      key={feeling.slug}
+                                      className="rounded-full border border-purple-400 bg-purple-400 px-3.5 py-1.5 text-sm font-medium text-white"
+                                    >
+                                      {feeling.label}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              <MoodTexts thought={m.thought} behavior={m.behavior} />
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
               )}
             </CardBody>
           </Card>
@@ -181,7 +198,7 @@ function humorSubtitle(rangeDays: number, displayedWindow: DisplayedWindow | nul
 
 /**
  * Adapta o SummaryMood (resumo do paciente) pro shape que o MoodChart espera.
- * O gráfico só lê mood_level e recorded_at; thought e behavior entram vazios
+ * O gráfico só lê mood_level e recorded_at; thought e behavior entram nulos
  * só para satisfazer o tipo Mood.
  */
 function toChartMoods(
@@ -192,8 +209,8 @@ function toChartMoods(
     id: m.id,
     user_id: userId,
     mood_level: m.mood_level as MoodLevel,
-    thought: '',
-    behavior: '',
+    thought: null,
+    behavior: null,
     recorded_at: m.recorded_at,
     created_at: m.recorded_at,
     updated_at: m.recorded_at,
@@ -255,9 +272,3 @@ function SummaryError({ error }: { error: unknown }) {
   );
 }
 
-function formatDay(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-  });
-}

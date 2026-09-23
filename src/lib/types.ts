@@ -42,8 +42,9 @@ export interface Mood {
   id: number;
   user_id: number;
   mood_level: MoodLevel;
-  thought: string;
-  behavior: string;
+  /** Nullable no banco: registro anterior à migration pode não ter os dois textos. */
+  thought: string | null;
+  behavior: string | null;
   recorded_at: string;
   created_at: string;
   updated_at: string;

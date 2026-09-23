@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { MoodTexts } from './MoodTexts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Spinner } from '@/components/ui/Spinner';
@@ -77,16 +78,7 @@ export function TodayMoodList({ moods, isLoading }: TodayMoodListProps) {
                   </div>
                 )}
 
-                <dl className="mt-3 space-y-2">
-                  <div>
-                    <dt className="text-xs font-medium text-ink-soft">Pensamento</dt>
-                    <dd className="text-sm text-ink">{mood.thought}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-ink-soft">Comportamento</dt>
-                    <dd className="text-sm text-ink">{mood.behavior}</dd>
-                  </div>
-                </dl>
+                <MoodTexts thought={mood.thought} behavior={mood.behavior} />
               </li>
             );
           })}

@@ -23,7 +23,9 @@ export interface SummaryMood {
   id: number;
   user_id: number;
   mood_level: number;
-  mood_description: string | null;
+  /** Nullable no banco: registro anterior à migration pode não ter os dois textos. */
+  thought: string | null;
+  behavior: string | null;
   recorded_at: string;
   feelings?: Feeling[];
 }
