@@ -91,3 +91,21 @@ export function ChevronLeftIcon(props: IconProps) {
     </svg>
   );
 }
+export function InstagramIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="M17.2 6.8h.01" />
+    </svg>
+  );
+}
+
+export function WhatsAppIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M20.5 11.6a8.5 8.5 0 0 1-12.4 7.5L3.5 20.5l1.4-4.6a8.5 8.5 0 1 1 15.6-4.3Z" />
+      <path d="M9 8.8c-.6 1.8.4 3.8 1.8 5.2 1.4 1.4 3.4 2.4 5.2 1.8l-.6-1.7-1.5.4a6 6 0 0 1-1.9-1.3 6 6 0 0 1-1.3-1.9l.4-1.5-1.7-.6Z" />
+    </svg>
+  );
+}

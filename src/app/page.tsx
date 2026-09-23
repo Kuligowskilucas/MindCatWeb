@@ -6,6 +6,8 @@ import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { MoodDemo } from '@/components/landing/MoodDemo';
 import { MoodChartPreview } from '@/components/landing/MoodChartPreview';
 import { CompletedTaskDate } from '@/components/landing/CompletedTaskDate';
+import { WhatsAppFab } from '@/components/landing/WhatsAppFab';
+import { InstagramIcon, WhatsAppIcon } from '@/components/icons';
 import type { MoodLevel } from '@/lib/types';
 
 const fraunces = Fraunces({
@@ -25,6 +27,11 @@ export const metadata: Metadata = {
     locale: 'pt_BR',
   },
 };
+
+const INSTAGRAM_URL = 'https://www.instagram.com/_mindcat/';
+const WHATSAPP_NUMBER = '5541997696781';
+const WHATSAPP_MESSAGE = 'Oi! Vim pelo site do MindCat.';
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
 const ctaPrimary =
   'inline-flex h-12 items-center justify-center rounded-lg bg-purple-600 px-6 ' +
@@ -391,6 +398,34 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-2xl px-6 py-16 sm:py-20">
+        <SectionTitle>Fale com a gente</SectionTitle>
+        <p className="mt-5 text-base leading-relaxed text-ink-soft">
+          Dúvida sobre o app, sugestão ou vontade de entender se o MindCat serve pra você?
+          Chame por onde preferir.
+        </p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${ctaSecondary} gap-2`}
+          >
+            <InstagramIcon aria-hidden />
+            Instagram
+          </a>
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${ctaSecondary} gap-2`}
+          >
+            <WhatsAppIcon aria-hidden />
+            WhatsApp
+          </a>
+        </div>
+      </section>
+
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <Wordmark />
@@ -413,6 +448,9 @@ export default function Home() {
           </nav>
         </div>
       </footer>
+
+      {/* Montado aqui, não no layout do grupo (public): o flutuante é só da landing. */}
+      <WhatsAppFab href={WHATSAPP_URL} />
     </div>
   );
 }
