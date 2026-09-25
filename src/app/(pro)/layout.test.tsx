@@ -117,3 +117,79 @@ describe('ProLayout sem bloqueio de credencial', () => {
     expect(screen.getByText('CONTEUDO-PRO')).toBeInTheDocument();
   });
 });
+
+describe('ProLayout — aviso de verificação', () => {
+  function renderLayout() {
+    render(
+      <ProLayout>
+        <div>CONTEUDO-PRO</div>
+      </ProLayout>,
+    );
+  }
+
+  it.each(['pending', 'rejected', 'expired', 'suspended'] as CredentialStatus[])(
+    'mostra aviso discreto com link para a verificação quando a credencial está %s',
+    (status) => {
+      mocks.credState = { data: cred({ status }), isLoading: false, isError: false };
+      renderLayout();
+
+      expect(screen.getByText(/ainda não foi verificado/)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Verificar registro' })).toHaveAttribute(
+        'href',
+        '/pro/verificacao',
+      );
+      expect(screen.getByText('CONTEUDO-PRO')).toBeInTheDocument();
+    },
+  );
+
+  it('fala em análise quando a credencial foi enviada', () => {
+    mocks.credState = { data: cred({ status: 'submitted' }), isLoading: false, isError: false };
+    renderLayout();
+
+    expect(screen.getByText(/está em análise/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver verificação' })).toHaveAttribute(
+      'href',
+      '/pro/verificacao',
+    );
+  });
+
+  it('trata aprovada com carência vencida como não verificada', () => {
+    mocks.credState = {
+      data: cred({ next_review_at: iso(-30) }),
+      isLoading: false,
+      isError: false,
+    };
+    renderLayout();
+
+    expect(screen.getByText(/ainda não foi verificado/)).toBeInTheDocument();
+  });
+
+  it('não mostra aviso quando a credencial está aprovada e em dia', () => {
+    mocks.credState = { data: cred(), isLoading: false, isError: false };
+    renderLayout();
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('mostra o banner de carência, sem falar em bloqueio, quando a revisão venceu há pouco', () => {
+    mocks.credState = {
+      data: cred({ next_review_at: iso(-2) }),
+      isLoading: false,
+      isError: false,
+    };
+    renderLayout();
+
+    expect(screen.getByText('A revisão da sua credencial venceu.')).toBeInTheDocument();
+    expect(screen.getByText(/Seu atendimento continua normalmente/)).toBeInTheDocument();
+    expect(screen.queryByText(/bloquead/)).not.toBeInTheDocument();
+  });
+
+  it('não repete o aviso na própria página de verificação', () => {
+    mocks.pathname = '/pro/verificacao';
+    mocks.credState = { data: cred({ status: 'pending' }), isLoading: false, isError: false };
+    renderLayout();
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByText('CONTEUDO-PRO')).toBeInTheDocument();
+  });
+});
