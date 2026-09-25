@@ -80,7 +80,9 @@ export default function AdminPage() {
                   </span>
                   <span className="block truncate text-xs text-ink-faint">
                     {it.user.email}
-                    {it.crp_number ? ` · CRP ${it.crp_number}` : ''}
+                    {it.registration_number
+                      ? ` · ${it.council ?? 'Registro'} ${it.registration_number}`
+                      : ''}
                   </span>
                 </span>
                 <ChevronRightIcon aria-hidden className="h-5 w-5 shrink-0 text-ink-faint" />

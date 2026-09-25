@@ -11,6 +11,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Dialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
 import { ChevronLeftIcon } from '@/components/icons';
+import type { AdminCredentialDetail } from '@/lib/api/adminCredentials';
+import type { Profession } from '@/lib/api/credentials';
 import {
   useAdminCredentialDetail,
   useApproveCredential,
@@ -20,9 +22,15 @@ import {
 
 const KIND_LABEL: Record<string, string> = {
   crp_card: 'Comprovante do CRP',
+  crm_card: 'Comprovante do CRM',
   epsi_proof: 'Comprovante do e-Psi',
   diploma: 'Diploma',
   other: 'Documento',
+};
+
+const PROFESSION_LABEL: Record<Profession, string> = {
+  psychologist: 'Psicólogo(a)',
+  psychiatrist: 'Psiquiatra',
 };
 
 export default function AdminCredentialDetailPage() {
@@ -65,6 +73,8 @@ export default function AdminCredentialDetailPage() {
   const pending =
     data?.credential.status === 'submitted' ||
     data?.credential.status === 'under_review';
+  const incomplete =
+    !!data && (!data.credential.profession || !data.credential.registration_number);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -103,9 +113,7 @@ export default function AdminCredentialDetailPage() {
           <Card>
             <CardHeader title="Registro" />
             <CardBody className="space-y-1.5 text-sm">
-              <Row label="CRP" value={data.credential.crp_number ?? '—'} />
-              <Row label="Região" value={data.credential.crp_region ?? '—'} />
-              <Row label="e-Psi declarado" value={data.credential.epsi_registered ? 'Sim' : 'Não'} />
+              <RegistrationRows credential={data.credential} />
               <Row label="Status" value={data.credential.status} />
               {data.credential.rejection_reason && (
                 <Row label="Motivo anterior" value={data.credential.rejection_reason} />
@@ -148,6 +156,13 @@ export default function AdminCredentialDetailPage() {
             </CardBody>
           </Card>
 
+          {pending && incomplete && (
+            <p className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-ink-soft" role="status">
+              Esta credencial não tem profissão ou número de registro. A API recusa a aprovação
+              nesse caso; recuse com um motivo para o profissional reenviar.
+            </p>
+          )}
+
           {pending ? (
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => setRejectOpen(true)}>
@@ -186,6 +201,26 @@ export default function AdminCredentialDetailPage() {
         />
       </Dialog>
     </div>
+  );
+}
+
+function RegistrationRows({ credential }: { credential: AdminCredentialDetail['credential'] }) {
+  const { profession, council } = credential;
+  const regionLabel = council === 'CRM' ? 'UF' : council === 'CRP' ? 'Região' : 'Região/UF';
+
+  return (
+    <>
+      <Row label="Profissão" value={profession ? PROFESSION_LABEL[profession] : 'Não informada'} />
+      <Row label="Conselho" value={council ?? '—'} />
+      <Row label="Número" value={credential.registration_number ?? '—'} />
+      <Row label={regionLabel} value={credential.registration_region ?? '—'} />
+      {profession === 'psychiatrist' && (
+        <Row label="RQE" value={credential.rqe_number ?? 'Não informado'} />
+      )}
+      {profession === 'psychologist' && (
+        <Row label="e-Psi declarado" value={credential.epsi_registered ? 'Sim' : 'Não'} />
+      )}
+    </>
   );
 }
 

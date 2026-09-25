@@ -1,11 +1,13 @@
 import { http } from '@/lib/http';
 import type { Paginated } from '@/lib/api/tasks';
-import type { CredentialStatus } from '@/lib/api/credentials';
+import type { Council, CredentialStatus, Profession } from '@/lib/api/credentials';
 
 export interface AdminQueueItem {
   id: number;
   status: CredentialStatus;
-  crp_number: string | null;
+  profession: Profession | null;
+  council: Council | null;
+  registration_number: string | null;
   submitted_at: string | null;
   user: { id: number; name: string; email: string };
 }
@@ -23,8 +25,11 @@ export interface AdminCredentialDetail {
   credential: {
     id: number;
     status: CredentialStatus;
-    crp_number: string | null;
-    crp_region: string | null;
+    profession: Profession | null;
+    council: Council | null;
+    registration_number: string | null;
+    registration_region: string | null;
+    rqe_number: string | null;
     epsi_registered: boolean;
     rejection_reason: string | null;
     submitted_at: string | null;
