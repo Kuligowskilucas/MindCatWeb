@@ -42,8 +42,13 @@ export default function PrivacidadePage() {
             registros de humor (nível, sentimentos marcados, pensamento e
             comportamento), conteúdo do diário (criptografado) e tarefas
             terapêuticas.{' '}
-            <strong className="text-ink">Profissionais:</strong> número e região
-            do CRP, registro e-Psi e documentos enviados para validação.{' '}
+            <strong className="text-ink">Profissionais:</strong> profissão,
+            número de registro no conselho (CRP ou CRM), região ou UF do
+            registro, RQE quando informado, registro no e-Psi e documentos
+            comprobatórios. Esses dados servem para verificar o registro. Os
+            pacientes vinculados veem apenas o nome do profissional e o selo de
+            verificação; os documentos são acessados só pela equipe responsável
+            pela verificação.{' '}
             <strong className="text-ink">Técnicos:</strong> registros mínimos de
             funcionamento e segurança. Não usamos rastreamento publicitário.
           </p>
