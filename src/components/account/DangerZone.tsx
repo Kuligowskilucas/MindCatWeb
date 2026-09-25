@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,7 +11,15 @@ import { accountErrorMessage } from '@/hooks/useAccount';
 
 const CONFIRM_WORD = 'EXCLUIR';
 
-export function DangerZone() {
+const PATIENT_DESCRIPTION = (
+  <>
+    Seu diário, seus registros de humor e suas tarefas são apagados
+    para sempre. Sua conta é anonimizada e desativada. Não dá para
+    desfazer.
+  </>
+);
+
+export function DangerZone({ description = PATIENT_DESCRIPTION }: { description?: ReactNode }) {
   const { deleteAccount } = useAuth();
   const toast = useToast();
 
@@ -48,11 +56,7 @@ export function DangerZone() {
           description="Encerrar sua conta no MindCat de forma permanente."
         />
         <CardBody className="space-y-4">
-          <p className="text-sm text-ink-soft">
-            Seu diário, seus registros de humor e suas tarefas são apagados
-            para sempre. Sua conta é anonimizada e desativada. Não dá para
-            desfazer.
-          </p>
+          <p className="text-sm text-ink-soft">{description}</p>
           <div className="flex justify-end">
             <Button variant="danger" onClick={() => setOpen(true)}>
               Excluir minha conta
