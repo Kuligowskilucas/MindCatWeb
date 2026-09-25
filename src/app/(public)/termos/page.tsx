@@ -61,10 +61,12 @@ export default function TermosPage() {
         <section>
           <h2 className="text-base font-semibold text-ink">6. Profissionais</h2>
           <p className="mt-2">
-            O psicólogo declara ser habilitado e é responsável pela veracidade da
-            credencial que envia. A validação pela plataforma não substitui a
-            responsabilidade profissional e ética do psicólogo perante seu
-            conselho de classe.
+            O profissional (psicólogo ou psiquiatra) declara ser legalmente
+            habilitado e é responsável pela veracidade das informações e
+            credenciais que informar, independentemente de ter solicitado ou
+            obtido o selo de verificação. A verificação pela plataforma é
+            opcional e não substitui a sua responsabilidade profissional e ética
+            perante o seu conselho (CRP ou CRM).
           </p>
         </section>
 
