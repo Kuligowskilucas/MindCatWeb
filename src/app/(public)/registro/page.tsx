@@ -156,13 +156,13 @@ export default function RegistroPage() {
               active={role === 'pro'}
               onClick={() => setRole('pro')}
               label="Terapeuta"
-              description="Acompanho pacientes. Exige validação do CRP"
+              description="Psicólogo(a) ou psiquiatra. Registro verificável"
             />
           </div>
           {role === 'pro' && (
             <p className="mt-2 text-xs text-ink-faint">
-              Contas profissionais passarão por verificação de CRP antes de
-              acessar pacientes.
+              Psicólogos e psiquiatras podem verificar o registro (CRP ou CRM) depois do
+              cadastro. Seus pacientes veem se o seu registro é verificado.
             </p>
           )}
         </div>
