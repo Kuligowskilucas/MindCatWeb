@@ -18,8 +18,11 @@ function cred(overrides: Partial<Credential> = {}): Credential {
   return {
     id: 1,
     status: 'approved' as CredentialStatus,
-    crp_number: '06/12345',
-    crp_region: 'PR',
+    profession: 'psychologist',
+    council: 'CRP',
+    registration_number: '06/12345',
+    registration_region: '06',
+    rqe_number: null,
     epsi_registered: true,
     rejection_reason: null,
     submitted_at: iso(-30),
