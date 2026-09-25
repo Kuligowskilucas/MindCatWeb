@@ -42,8 +42,13 @@ export default function PrivacidadePage() {
             registros de humor (nível, sentimentos marcados, pensamento e
             comportamento), conteúdo do diário (criptografado) e tarefas
             terapêuticas.{' '}
-            <strong className="text-ink">Profissionais:</strong> número e região
-            do CRP, registro e-Psi e documentos enviados para validação.{' '}
+            <strong className="text-ink">Profissionais:</strong> profissão,
+            número de registro no conselho (CRP ou CRM), região ou UF do
+            registro, RQE quando informado, registro no e-Psi e documentos
+            comprobatórios. Esses dados servem para verificar o registro. Os
+            pacientes vinculados veem apenas o nome do profissional e o selo de
+            verificação; os documentos são acessados só pela equipe responsável
+            pela verificação.{' '}
             <strong className="text-ink">Técnicos:</strong> registros mínimos de
             funcionamento e segurança. Não usamos rastreamento publicitário.
           </p>
@@ -60,7 +65,7 @@ export default function PrivacidadePage() {
             Tratamos os dados de cadastro para criar e proteger sua conta
             (execução de contrato). Os dados de saúde (humor, sentimentos
             marcados, pensamento, comportamento, diário, tarefas) e o
-            compartilhamento com o seu psicólogo têm como base o seu
+            compartilhamento com o profissional vinculado têm como base o seu
             consentimento específico e destacado (art. 11, I), que você pode
             retirar a qualquer momento. O seu diário nunca é compartilhado.
           </p>
@@ -72,22 +77,24 @@ export default function PrivacidadePage() {
             O conteúdo do seu diário é criptografado (AES-256), com a chave
             mantida separada do banco de dados, e protegido por uma senha
             própria, separada da senha de acesso. O seu diário nunca é
-            compartilhado com o psicólogo — nem o conteúdo, nem as datas.
+            compartilhado com o profissional vinculado — nem o conteúdo, nem as
+            datas.
           </p>
         </section>
 
         <section>
           <h2 className="text-base font-semibold text-ink">6. Compartilhamento</h2>
           <p className="mt-2">
-            Não vendemos seus dados. Compartilhamos apenas: com o seu psicólogo,
-            quando você ativa o consentimento; com prestadores que operam a
-            infraestrutura (seção 7); e com autoridades, quando exigido por lei.
+            Não vendemos seus dados. Compartilhamos apenas: com o profissional
+            vinculado, quando você ativa o consentimento; com prestadores que
+            operam a infraestrutura (seção 7); e com autoridades, quando exigido
+            por lei.
           </p>
           <p className="mt-2">
-            Com o psicólogo, o compartilhamento se limita aos seus registros de
-            humor (o nível, os sentimentos marcados, o pensamento e o
-            comportamento) e ao progresso das suas tarefas. O seu diário nunca é
-            compartilhado.
+            Com o profissional vinculado, o compartilhamento se limita aos seus
+            registros de humor (o nível, os sentimentos marcados, o pensamento e
+            o comportamento) e ao progresso das suas tarefas. O seu diário nunca
+            é compartilhado.
           </p>
         </section>
 
@@ -122,7 +129,7 @@ export default function PrivacidadePage() {
           <p className="mt-2">
             Criptografia do diário, senhas armazenadas apenas como hash,
             verificação em duas etapas opcional, conexão criptografada (HTTPS) e
-            controle de acesso: o psicólogo só vê pacientes vinculados que
+            controle de acesso: o profissional só vê pacientes vinculados que
             consentiram.
           </p>
         </section>

@@ -1,15 +1,9 @@
 export type Role = 'patient' | 'pro' | 'admin';
 
-export type TreatmentType = 'pre_defined' | 'ai_based';
-
 export interface UserProfile {
   id: number;
   user_id: number;
-  use_ai: boolean;
-  treatment_type: TreatmentType | null;
-  tdah_reminder: boolean;
   push_notifications: boolean;
-  progress_bar: boolean;
   consent_share_with_professional: boolean;
   // diary_password_hash NUNCA vem na API (está em $hidden).
   // has_diary_password é o booleano derivado ($appends no UserProfile) —

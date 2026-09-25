@@ -21,7 +21,7 @@ export function isReviewOverdue(credential?: Credential): boolean {
   return Date.now() > new Date(credential.next_review_at).getTime();
 }
 
-export function daysUntilBlock(credential: Credential): number {
+export function daysUntilBadgeExpires(credential: Credential): number {
   const deadline = reviewDeadline(credential);
   if (deadline === null) return 0;
   return Math.max(0, Math.ceil((deadline - Date.now()) / DAY_MS));

@@ -352,9 +352,10 @@ export default function Home() {
               você, que adiciona em Pacientes.
             </p>
             <p className="mt-6 rounded-card border border-purple-200 bg-surface p-4 text-base leading-relaxed text-ink-soft">
-              O acesso profissional passa por uma validação do seu registro (CRP) antes de
-              liberar os atendimentos. Você cria a conta, envia os comprovantes e nossa
-              equipe confirma o cadastro.
+              Psicólogos e psiquiatras podem verificar o registro no conselho (CRP ou CRM).
+              Você envia os comprovantes, nossa equipe confirma e seus pacientes passam a ver
+              o selo de profissional verificado. A verificação é opcional e não trava seus
+              atendimentos.
             </p>
           </div>
 

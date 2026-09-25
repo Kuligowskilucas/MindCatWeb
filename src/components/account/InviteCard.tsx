@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
@@ -113,6 +114,13 @@ export function InviteCard() {
             </Button>
           </div>
         )}
+
+        <Link
+          href="/profissionais"
+          className="mt-4 inline-block text-sm font-medium text-purple-600 transition-colors hover:text-purple-700"
+        >
+          Ver profissionais vinculados
+        </Link>
       </CardBody>
     </Card>
   );

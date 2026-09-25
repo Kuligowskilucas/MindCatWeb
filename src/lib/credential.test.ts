@@ -4,7 +4,7 @@ import {
   CREDENTIAL_GRACE_DAYS,
   isCredentialActive,
   isReviewOverdue,
-  daysUntilBlock,
+  daysUntilBadgeExpires,
 } from '@/lib/credential';
 
 const NOW = new Date('2026-08-03T12:00:00.000Z');
@@ -18,8 +18,11 @@ function cred(overrides: Partial<Credential> = {}): Credential {
   return {
     id: 1,
     status: 'approved' as CredentialStatus,
-    crp_number: '06/12345',
-    crp_region: 'PR',
+    profession: 'psychologist',
+    council: 'CRP',
+    registration_number: '06/12345',
+    registration_region: '06',
+    rqe_number: null,
     epsi_registered: true,
     rejection_reason: null,
     submitted_at: iso(-30),
@@ -68,7 +71,7 @@ describe('isCredentialActive', () => {
     expect(isCredentialActive(cred({ next_review_at: iso(-2) }))).toBe(true);
   });
 
-  it('bloqueia depois que a carência de 7 dias expira', () => {
+  it('deixa de ser ativa depois que a carência de 7 dias expira', () => {
     expect(isCredentialActive(cred({ next_review_at: iso(-10) }))).toBe(false);
   });
 });
@@ -84,7 +87,7 @@ describe('isReviewOverdue', () => {
     ).toBe(false);
   });
 
-  it('é true assim que a data de revisão passa, antes de bloquear', () => {
+  it('é true assim que a data de revisão passa, antes de o selo expirar', () => {
     expect(isReviewOverdue(cred({ next_review_at: iso(-2) }))).toBe(true);
   });
 
@@ -93,18 +96,18 @@ describe('isReviewOverdue', () => {
   });
 });
 
-describe('daysUntilBlock', () => {
+describe('daysUntilBadgeExpires', () => {
   it('é 0 quando não há data de revisão', () => {
-    expect(daysUntilBlock(cred({ next_review_at: null }))).toBe(0);
+    expect(daysUntilBadgeExpires(cred({ next_review_at: null }))).toBe(0);
   });
 
   it('conta os dias restantes da carência após a revisão vencer', () => {
-    expect(daysUntilBlock(cred({ next_review_at: iso(-2) }))).toBe(
+    expect(daysUntilBadgeExpires(cred({ next_review_at: iso(-2) }))).toBe(
       CREDENTIAL_GRACE_DAYS - 2,
     );
   });
 
   it('nunca é negativo depois que a carência acaba', () => {
-    expect(daysUntilBlock(cred({ next_review_at: iso(-10) }))).toBe(0);
+    expect(daysUntilBadgeExpires(cred({ next_review_at: iso(-10) }))).toBe(0);
   });
 });

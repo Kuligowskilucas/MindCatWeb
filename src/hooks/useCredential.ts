@@ -18,7 +18,6 @@ export function useSubmitCredential() {
   return useMutation({
     mutationFn: (form: FormData) => credentialsApi.submit(form),
     onSuccess: () => {
-      // Atualiza o status (submitted) e libera/atualiza o gate do painel.
       queryClient.invalidateQueries({ queryKey: CREDENTIAL_KEY });
     },
   });

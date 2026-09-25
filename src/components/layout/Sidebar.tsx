@@ -26,6 +26,7 @@ const NAV: Record<NavKind, NavItem[]> = {
     { href: '/hoje',    label: 'Hoje',    icon: HomeIcon },
     { href: '/diario',  label: 'Diário',  icon: DiaryIcon },
     { href: '/tarefas', label: 'Tarefas', icon: TasksIcon },
+    { href: '/profissionais', label: 'Profissionais', icon: PatientsIcon },
     { href: '/perfil',  label: 'Perfil',  icon: ProfileIcon },
   ],
   pro: [
@@ -34,7 +35,7 @@ const NAV: Record<NavKind, NavItem[]> = {
     { href: '/pro/perfil',   label: 'Perfil',    icon: ProfileIcon },
   ],
   admin: [
-    { href: '/admin', label: 'Validação CRP', icon: ProfileIcon },
+    { href: '/admin', label: 'Validação de registro', icon: ProfileIcon },
     { href: '/admin/auditoria', label: 'Auditoria', icon: TasksIcon },
   ],
 };
